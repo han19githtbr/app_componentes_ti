@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ARQ_COMP">
+<meta name="application-name" content="ARQ_COMP">
+<meta name="theme-color" content="#00d4ff">
+<meta name="msapplication-TileColor" content="#060a0f">
+<meta name="msapplication-TileImage" content="icons/icon-512.png">
+<meta name="description" content="Mapa interativo de arquitetura de computadores: hardware, software, SO, redes e segurança">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Favicons -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-96.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-72.png">
+<link rel="shortcut icon" href="icons/icon-192.png">
+
+<!-- Apple Touch Icons -->
+<link rel="apple-touch-icon" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+
+<title>Arquitetura de Computadores — Mapa Interativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="tooltip" id="tooltip"></div>
+
+<!-- ===== DETAIL PANEL ===== -->
+<div id="detail-panel">
+  <button class="panel-close" onclick="closePanel()">✕</button>
+  <div id="panel-type"></div>
+  <div class="panel-title" id="panel-title"></div>
+  <div class="panel-desc" id="panel-desc"></div>
+  <div id="panel-specs"></div>
+  <div id="panel-relations"></div>
+  <div id="panel-impacts"></div>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-tag" id="header-tag">// Estudo Técnico · Arquitetura de Computadores</div>
+  <h1><span id="header-title">SISTEMAS </span><span id="header-title-accent" style="color:var(--accent)">COMPUTACIONAIS</span></h1>
+  <div class="header-sub" id="header-sub">hardware · software · sistemas operacionais · redes · segurança</div>
+  <div class="lang-switcher">
+    <button class="lang-btn active" data-lang="pt" onclick="setLang('pt')">🇧🇷 PT</button>
+    <button class="lang-btn" data-lang="en" onclick="setLang('en')">🇺🇸 EN</button>
+    <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">🇫🇷 FR</button>
+  </div>
+</header>
+
+<!-- ===== TABS ===== -->
+<nav class="tabs">
+  <button class="tab active" data-tab="tree" onclick="showView('tree', this)">🌳 Mapa Geral</button>
+  <button class="tab" data-tab="sim" onclick="showView('sim', this)">⚡ Simulação de Falha</button>
+  <button class="tab" data-tab="virus" onclick="showView('virus', this)">🦠 Tipos de Vírus</button>
+  <button class="tab" data-tab="protection" onclick="showView('protection', this)">🛡️ Proteção contra Vírus</button>
+  <button class="tab" data-tab="relations" onclick="showView('relations', this)">🔗 Matriz de Relações</button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- VIEW 1: TREE MAP                                             -->
+<!-- ============================================================ -->
+<div class="view active" id="view-tree">
+<div class="tree-container">
+  <div class="tree-title" id="tree-hint">// clique em qualquer nó para ver detalhes completos</div>
+
+  <div class="tree-root">
+    <!-- ROOT -->
+    <div class="root-node" onclick="openPanel('computer')">
+      <div class="root-icon">🖥️</div>
+      <div class="root-label" id="root-label">COMPUTADOR</div>
+      <div class="root-sub" id="root-sub">sistema computacional completo</div>
+    </div>
+
+    <div class="connector-v"></div>
+
+    <!-- LEVEL 1: 6 branches -->
+    <div class="connector-h">
+
+      <!-- HARDWARE -->
+      <div class="branch">
+        <div class="cat-node cat-hw" onclick="openPanel('hardware')">
+          <div class="icon">🔧</div>
+          <div class="label" id="cat-label-hw">Hardware</div>
+          <div class="sublabel" id="cat-sub-hw">componentes físicos</div>
+        </div>
+        <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
+        <div class="sub-branches" style="max-width:200px;">
+          <div class="leaf" onclick="openPanel('cpu')">⚙️ CPU</div>
+          <div class="leaf" onclick="openPanel('gpu')">🎮 GPU</div>
+          <div class="leaf" onclick="openPanel('ram')">💾 RAM</div>
+          <div class="leaf" onclick="openPanel('mobo')">🟫 Placa‑Mãe</div>
+          <div class="leaf" onclick="openPanel('psu')">🔌 Fonte</div>
+          <div class="leaf" onclick="openPanel('storage')">💿 Armazenamento</div>
+          <div class="leaf" onclick="openPanel('nic')">📡 Placa Rede</div>
+          <div class="leaf" onclick="openPanel('cooler')">❄️ Cooler</div>
+          <div class="leaf" onclick="openPanel('pcie')">🔗 PCIe/Barramento</div>
+        </div>
+      </div>
+
+      <!-- BIOS/FIRMWARE -->
+      <div class="branch">
+        <div class="cat-node cat-bios" onclick="openPanel('bios')">
+          <div class="icon">🔑</div>
+          <div class="label" id="cat-label-bios">BIOS / UEFI</div>
+          <div class="sublabel" id="cat-sub-bios">firmware</div>
+        </div>
+        <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
+        <div class="sub-branches" style="max-width:180px;">
+          <div class="leaf" onclick="openPanel('post')">🟢 POST</div>
+          <div class="leaf" onclick="openPanel('cmos')">🔋 CMOS</div>
+          <div class="leaf" onclick="openPanel('boot_seq')">🚀 Boot Seq.</div>
+          <div class="leaf" onclick="openPanel('uefi')">🛡️ Secure Boot</div>
+          <div class="leaf" onclick="openPanel('overclock')">📈 Overclock</div>
+        </div>
+      </div>
+
+      <!-- SISTEMA OPERACIONAL -->
+      <div class="branch">
+        <div class="cat-node cat-os" onclick="openPanel('so')">
+          <div class="icon">💻</div>
+          <div class="label" id="cat-label-os">Sist. Oper.</div>
+          <div class="sublabel" id="cat-sub-os">kernel & processos</div>
+        </div>
+        <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
+        <div class="sub-branches" style="max-width:220px;">
+          <div class="leaf" onclick="openPanel('windows')">🪟 Windows</div>
+          <div class="leaf" onclick="openPanel('linux')">🐧 Linux</div>
+          <div class="leaf" onclick="openPanel('macos')">🍎 macOS</div>
+          <div class="leaf" onclick="openPanel('kernel')">⚛️ Kernel</div>
+          <div class="leaf" onclick="openPanel('filesystem')">📁 Filesystem</div>
+          <div class="leaf" onclick="openPanel('drivers')">🔌 Drivers</div>
+          <div class="leaf" onclick="openPanel('processes')">⚙️ Processos</div>
+        </div>
+      </div>
+
+      <!-- REDES -->
+      <div class="branch">
+        <div class="cat-node cat-net" onclick="openPanel('redes')">
+          <div class="icon">🌐</div>
+          <div class="label" id="cat-label-net">Redes</div>
+          <div class="sublabel" id="cat-sub-net">protocolos</div>
+        </div>
+        <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
+        <div class="sub-branches" style="max-width:200px;">
+          <div class="leaf" onclick="openPanel('tcpip')">📡 TCP/IP</div>
+          <div class="leaf" onclick="openPanel('dns')">🔍 DNS</div>
+          <div class="leaf" onclick="openPanel('dhcp')">📋 DHCP</div>
+          <div class="leaf" onclick="openPanel('firewall')">🔥 Firewall</div>
+          <div class="leaf" onclick="openPanel('wifi')">📶 Wi‑Fi</div>
+          <div class="leaf" onclick="openPanel('osi')">📊 Modelo OSI</div>
+          <div class="leaf" onclick="openPanel('vpn')">🔒 VPN</div>
+        </div>
+      </div>
+
+      <!-- SEGURANÇA / VÍRUS -->
+      <div class="branch">
+        <div class="cat-node cat-virus" onclick="openPanel('seguranca')">
+          <div class="icon">🦠</div>
+          <div class="label" id="cat-label-virus">Vírus</div>
+          <div class="sublabel" id="cat-sub-virus">segurança</div>
+        </div>
+        <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
+        <div class="sub-branches" style="max-width:220px;">
+          <div class="leaf" onclick="openPanel('virus_cls')">🧬 Vírus</div>
+          <div class="leaf" onclick="openPanel('malware')">☠️ Malware</div>
+          <div class="leaf" onclick="openPanel('ransomware')">🔐 Ransomware</div>
+          <div class="leaf" onclick="openPanel('rootkit')">👻 Rootkit</div>
+          <div class="leaf" onclick="openPanel('antivirus')">🛡️ Antivírus</div>
+          <div class="leaf" onclick="openPanel('criptografia')">🔑 Criptografia</div>
+        </div>
+      </div>
+
+      <!-- SOFTWARE -->
+      <div class="branch">
+        <div class="cat-node cat-sw" onclick="openPanel('software')">
+          <div class="icon">📦</div>
+          <div class="label" id="cat-label-sw">Software</div>
+          <div class="sublabel" id="cat-sub-sw">aplicativos</div>
+        </div>
+        <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
+        <div class="sub-branches" style="max-width:200px;">
+          <div class="leaf" onclick="openPanel('apps')">📱 Aplicativos</div>
+          <div class="leaf" onclick="openPanel('compiler')">⚙️ Compiladores</div>
+          <div class="leaf" onclick="openPanel('vm')">🖥️ VMs/Containers</div>
+          <div class="leaf" onclick="openPanel('api')">🔌 APIs</div>
+          <div class="leaf" onclick="openPanel('libs')">📚 Bibliotecas</div>
+        </div>
+      </div>
+
+    </div><!-- end connector-h -->
+  </div><!-- end tree-root -->
+</div><!-- end tree-container -->
+</div><!-- end view-tree -->
+
+
+<!-- ============================================================ -->
+<!-- VIEW 2: SIMULATION                                           -->
+<!-- ============================================================ -->
+<div class="view" id="view-sim">
+<div class="sim-container">
+  <div class="section-hdr" id="sim-title">// simulação de falha em cascata</div>
+
+  <div class="sim-controls">
+    <span class="sim-label">FALHAS ATIVAS:</span>
+    <span id="fail-count" style="font-family:var(--font-mono);font-size:1rem;color:var(--virus);font-weight:700;">0</span>
+    <button class="sim-btn reset-btn" onclick="resetSim()">↺ Resetar Sistema</button>
+  </div>
+
+  <div id="pc-diagram" class="pc-diagram"></div>
+
+  <div class="impact-log" id="impact-log">
+    <div class="log-title" id="sim-log-title">// log de impacto em tempo real</div>
+    <div id="log-entries">
+      <div class="log-entry success" style="opacity:1;">
+        <span class="log-ts">[00:00:00]</span> Sistema iniciado. Todos os componentes operacionais.
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- end view-sim -->
+
+
+<!-- ============================================================ -->
+<!-- VIEW 3: VIRUS TYPES                                          -->
+<!-- ============================================================ -->
+<div class="view" id="view-virus">
+<div class="virus-container">
+  <div class="section-hdr" id="virus-title">// tipos de malware e vetores de ataque</div>
+  <div class="virus-grid" id="virus-grid"></div>
+</div>
+</div><!-- end view-virus -->
+
+
+<!-- ============================================================ -->
+<!-- VIEW 4: PROTECTION                                           -->
+<!-- ============================================================ -->
+<div class="view" id="view-protection">
+<div class="prot-container">
+  <div class="prot-header">
+    <h2 id="prot-main-title">// como se proteger contra ataques</h2>
+    <p id="prot-main-sub">Selecione um tipo de ataque para ver a simulação completa</p>
+  </div>
+
+  <div class="prot-layout">
+    <!-- Attack selector -->
+    <div class="attack-list" id="attack-list"></div>
+
+    <!-- Simulation panel -->
+    <div id="prot-sim-panel" class="prot-sim-panel">
+      <div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text3);font-family:var(--font-mono);font-size:0.7rem;">
+        Selecione um ataque para começar →
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- end view-protection -->
+
+
+<!-- ============================================================ -->
+<!-- VIEW 5: RELATIONS                                            -->
+<!-- ============================================================ -->
+<div class="view" id="view-relations">
+<div class="rel-container">
+  <div class="section-hdr" id="rel-title">// matriz de relações entre componentes</div>
+
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🟢 Dependência direta</span>
+    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🔵 Interação indireta</span>
+    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🔴 Ataca/degrada</span>
+    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">⬛ Sem relação</span>
+  </div>
+
+  <div class="rel-matrix">
+    <table class="rel-table" id="rel-table"></table>
+  </div>
+</div>
+</div><!-- end view-relations -->
+
+<!-- ============================================================ -->
+<!-- REPAIR PANEL OVERLAY                                        -->
+<!-- ============================================================ -->
+<div id="repair-panel" class="repair-panel">
+  <div class="repair-panel-inner">
+    <div class="repair-panel-top">
+      <div id="repair-panel-title" class="repair-panel-title"></div>
+      <button class="repair-close-btn" onclick="closeRepairPanel()">✕</button>
+    </div>
+    <div id="repair-panel-body" class="repair-panel-body"></div>
+  </div>
+</div>
+<div id="repair-backdrop" class="repair-backdrop" onclick="closeRepairPanel()"></div>
+
+<script src="js/index.js"></script>
+
+<!-- ===== PWA INSTALL BANNER ===== -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f1823;border:1px solid #00d4ff44;border-radius:12px;padding:14px 20px;align-items:center;gap:14px;z-index:9999;box-shadow:0 8px 40px rgba(0,212,255,0.15);max-width:420px;width:calc(100% - 40px);animation:slide-up 0.4s ease;">
+  <img src="icons/icon-72.png" width="40" height="40" style="border-radius:8px;flex-shrink:0;" alt="ARQ_COMP">
+  <div style="flex:1;min-width:0;">
+    <div style="font-family:'Rajdhani',sans-serif;font-weight:700;color:#fff;font-size:0.9rem;">Instalar ARQ_COMP</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:#7a99bb;margin-top:2px;">Acesso offline · Sem navegador</div>
+  </div>
+  <button id="pwa-install-btn" style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;padding:7px 14px;border-radius:6px;border:1px solid #00d4ff88;background:rgba(0,212,255,0.12);color:#00d4ff;cursor:pointer;white-space:nowrap;flex-shrink:0;">⬇ Instalar</button>
+  <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:none;border:none;color:#415a78;cursor:pointer;font-size:1rem;padding:2px 4px;flex-shrink:0;">✕</button>
+</div>
+
+<style>
+@keyframes slide-up{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+</style>
+
+<script>
+(function() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          console.log('[PWA] SW registered:', reg.scope);
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdateToast();
+              }
+            });
+          });
+        })
+        .catch(err => console.warn('[PWA] SW failed:', err));
+    });
+  }
+
+  let deferredPrompt = null;
+  const banner = document.getElementById('pwa-banner');
+  const installBtn = document.getElementById('pwa-install-btn');
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    setTimeout(() => { if(deferredPrompt) banner.style.display = 'flex'; }, 3000);
+  });
+
+  if(installBtn) installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.style.display = 'none';
+  });
+
+  window.addEventListener('appinstalled', () => {
+    banner.style.display = 'none';
+    deferredPrompt = null;
+  });
+
+  function showUpdateToast() {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#0f1823;border:1px solid #22c55e44;border-radius:8px;padding:10px 18px;z-index:9999;display:flex;align-items:center;gap:10px;font-family:"Share Tech Mono",monospace;font-size:0.68rem;color:#6adf9a;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+    t.innerHTML = '<span>🔄 Nova versão disponível</span><button onclick="window.location.reload()" style="font-family:inherit;font-size:0.65rem;padding:4px 10px;border-radius:4px;border:1px solid #22c55e88;background:rgba(34,197,94,0.1);color:#22c55e;cursor:pointer;">Atualizar</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#415a78;cursor:pointer;">✕</button>';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 12000);
+  }
+
+  const hash = window.location.hash.replace('#','');
+  if(['tree','sim','virus','protection','relations'].includes(hash)){
+    window.addEventListener('DOMContentLoaded', () => {
+      const tab = document.querySelector('[data-tab="'+hash+'"]');
+      if(tab) tab.click();
+    });
+  }
+})();
+</script>
+</body>
+</html>
