@@ -29,6 +29,7 @@
 <title>Arquitetura de Computadores — Mapa Interativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -64,6 +65,7 @@
   <button class="tab" data-tab="virus" onclick="showView('virus', this)">🦠 Tipos de Vírus</button>
   <button class="tab" data-tab="protection" onclick="showView('protection', this)">🛡️ Proteção contra Vírus</button>
   <button class="tab" data-tab="relations" onclick="showView('relations', this)">🔗 Matriz de Relações</button>
+  <button class="tab" data-tab="diag" onclick="showView('diag', this)">🩺 Diagnóstico</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -270,21 +272,84 @@
 <!-- VIEW 5: RELATIONS                                            -->
 <!-- ============================================================ -->
 <div class="view" id="view-relations">
-<div class="rel-container">
-  <div class="section-hdr" id="rel-title">// matriz de relações entre componentes</div>
+  <div class="rel-container">
+    <div class="section-hdr" id="rel-title">// matriz de relações entre componentes</div>
 
-  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
-    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🟢 Dependência direta</span>
-    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🔵 Interação indireta</span>
-    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🔴 Ataca/degrada</span>
-    <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">⬛ Sem relação</span>
-  </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+      <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🟢 Dependência direta</span>
+      <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🔵 Interação indireta</span>
+      <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">🔴 Ataca/degrada</span>
+      <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);">⬛ Sem relação</span>
+    </div>
 
-  <div class="rel-matrix">
-    <table class="rel-table" id="rel-table"></table>
+    <div class="rel-matrix">
+      <table class="rel-table" id="rel-table"></table>
+    </div>
   </div>
-</div>
 </div><!-- end view-relations -->
+
+<!-- ============================================================ -->
+<!-- VIEW 6: DIAGNÓSTICO LOCAL                                    -->
+<!-- ============================================================ -->
+<div class="view" id="view-diag">
+  <div class="diag-container">
+    <div class="section-hdr">// diagnóstico inteligente de problemas</div>
+
+    <div class="diag-intro">
+      <div class="diag-intro-icon">🩺</div>
+      <div>
+        <div class="diag-intro-title">Assistente de Diagnóstico</div>
+        <div class="diag-intro-sub">Descreva o problema do seu computador. O sistema vai buscar as causas e o passo a passo da solução na base de conhecimento local — sem internet necessária.</div>
+      </div>
+    </div>
+
+    <div class="diag-input-wrap">
+      <div class="diag-step-label">// descreva o problema com suas palavras</div>
+      <div class="diag-input-area">
+        <textarea
+          id="diag-problem-input"
+          class="diag-textarea"
+          placeholder="Ex: meu computador esquenta muito e fica lento... tela azul aparece quando jogo... não consigo conectar na internet..."
+          rows="4"
+          maxlength="600"
+        ></textarea>
+        <div class="diag-input-footer">
+          <span class="diag-char-count"><span id="diag-char">0</span>/600</span>
+          <button class="diag-btn-primary" id="diag-analyze-btn" onclick="diagAnalyze()">
+            🔍 Diagnosticar
+          </button>
+        </div>
+      </div>
+
+      <div class="diag-examples">
+        <div class="diag-examples-label">// problemas comuns</div>
+        <div class="diag-examples-grid">
+          <div class="diag-chip" onclick="diagChip(this)">🔥 esquenta muito / superaquece</div>
+          <div class="diag-chip" onclick="diagChip(this)">💀 tela azul BSOD</div>
+          <div class="diag-chip" onclick="diagChip(this)">🐢 computador muito lento</div>
+          <div class="diag-chip" onclick="diagChip(this)">📶 sem internet / rede não funciona</div>
+          <div class="diag-chip" onclick="diagChip(this)">🦠 suspeita de vírus ou malware</div>
+          <div class="diag-chip" onclick="diagChip(this)">🔊 computador não liga / não dá POST</div>
+          <div class="diag-chip" onclick="diagChip(this)">💾 disco cheio ou com erro</div>
+          <div class="diag-chip" onclick="diagChip(this)">🎮 travamentos e crashes no jogo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="diag-loading hidden" id="diag-loading">
+      <div class="diag-scan-ring"></div>
+      <div class="diag-loading-text">Buscando na base de conhecimento...</div>
+    </div>
+
+    <!-- Result -->
+    <div class="hidden" id="diag-result">
+      <div id="diag-result-inner"></div>
+      <button class="diag-btn-reset" onclick="diagReset()">↺ Novo Diagnóstico</button>
+    </div>
+
+  </div>
+</div><!-- end view-diag -->
 
 <!-- ============================================================ -->
 <!-- REPAIR PANEL OVERLAY                                        -->
@@ -369,7 +434,7 @@
   }
 
   const hash = window.location.hash.replace('#','');
-  if(['tree','sim','virus','protection','relations'].includes(hash)){
+  if(['tree','sim','virus','protection','relations','diag'].includes(hash)){
     window.addEventListener('DOMContentLoaded', () => {
       const tab = document.querySelector('[data-tab="'+hash+'"]');
       if(tab) tab.click();

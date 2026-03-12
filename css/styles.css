@@ -1122,3 +1122,423 @@ table.rel-table td.row-header{
 @media (max-width: 600px) {
   .repair-panel { width: 100vw; }
 }
+
+/* ============================================================
+   DIAGNÓSTICO LOCAL
+   ============================================================ */
+.diag-container {
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+.diag-intro {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,212,255,0.02));
+  border: 1px solid rgba(0,212,255,0.18);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+.diag-intro-icon { font-size: 2rem; flex-shrink: 0; }
+.diag-intro-title { font-family: var(--font-title); font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 5px; }
+.diag-intro-sub { font-size: 0.75rem; color: var(--text2); line-height: 1.6; }
+
+.diag-input-wrap { transition: opacity 0.3s; }
+
+.diag-step-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+  opacity: 0.85;
+}
+
+.diag-input-area {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.diag-input-area:focus-within { border-color: rgba(0,212,255,0.4); }
+
+.diag-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 16px 18px;
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.65;
+}
+.diag-textarea::placeholder { color: var(--text3); }
+
+.diag-input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.15);
+}
+.diag-char-count { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text3); }
+
+.diag-btn-primary {
+  padding: 9px 22px;
+  background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,212,255,0.07));
+  border: 1px solid rgba(0,212,255,0.45);
+  border-radius: 6px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.diag-btn-primary:hover { background: rgba(0,212,255,0.2); box-shadow: 0 0 16px rgba(0,212,255,0.15); }
+
+.diag-btn-reset {
+  margin-top: 22px;
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.diag-btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Chips */
+.diag-examples { 
+  margin-top: 18px;
+  margin-bottom: 20px; 
+}
+.diag-examples-label { font-family: var(--font-mono); font-size: 0.58rem; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 10px; }
+.diag-examples-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.diag-chip {
+  padding: 6px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.71rem;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: var(--font-mono);
+  user-select: none;
+}
+.diag-chip:hover { border-color: rgba(0,212,255,0.4); color: var(--accent); background: rgba(0,212,255,0.05); }
+
+/* Loading */
+.diag-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 50px 0;
+}
+.diag-loading.hidden { display: none; }
+
+.diag-scan-ring {
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-right-color: rgba(0,212,255,0.35);
+  animation: dspin 0.85s linear infinite;
+}
+@keyframes dspin { to { transform: rotate(360deg); } }
+
+.diag-loading-text {
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  animation: dpulse 1.2s ease-in-out infinite;
+}
+@keyframes dpulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Result */
+#diag-result.hidden { display: none; }
+.diag-section { margin-bottom: 24px; }
+.diag-section-label {
+  font-family: var(--font-mono);
+  font-size: 0.59rem;
+  color: var(--text3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* Result header */
+.diag-result-header {
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 22px;
+}
+.diag-result-title { font-family: var(--font-title); font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.diag-sev-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.08em;
+}
+.diag-result-summary { font-size: 0.78rem; color: var(--text2); line-height: 1.6; margin-top: 8px; }
+.diag-keywords { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.diag-kw {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  padding: 2px 8px;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 10px;
+  color: var(--accent);
+}
+
+/* Cause cards */
+.diag-cause-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s;
+}
+.diag-cause-card:hover { border-color: var(--border2); }
+.diag-cause-top { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.diag-cause-icon { font-size: 1.25rem; flex-shrink: 0; }
+.diag-cause-name { font-size: 0.85rem; font-weight: 600; }
+.diag-cause-type { font-family: var(--font-mono); font-size: 0.58rem; color: var(--text3); margin-top: 2px; letter-spacing: 0.08em; }
+
+.diag-prob-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; min-width: 70px; }
+.diag-prob-num { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; }
+.diag-prob-track { width: 70px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.diag-prob-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+
+.diag-impacts { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.diag-impact-item { font-size: 0.7rem; color: #ff9999; padding-left: 4px; line-height: 1.45; }
+.diag-see-more {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--text3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.18s;
+}
+.diag-see-more:hover { color: var(--accent); }
+
+/* Step cards */
+.diag-step-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  animation: dstep-in 0.35s ease both;
+  position: relative;
+  overflow: hidden;
+}
+@keyframes dstep-in { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+
+.diag-step-header { display: flex; align-items: center; gap: 10px; }
+.diag-step-num {
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  font-weight: 700;
+  width: 28px; height: 28px;
+  background: rgba(0,212,255,0.1);
+  color: var(--accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.diag-step-icon { font-size: 1rem; flex-shrink: 0; }
+.diag-step-title { flex: 1; font-size: 0.85rem; font-weight: 600; color: #fff; }
+.diag-diff-badge {
+  font-family: var(--font-mono);
+  font-size: 0.57rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.diag-step-desc { font-size: 0.73rem; color: var(--text2); line-height: 1.6; padding-left: 38px; }
+
+/* Virus card */
+.diag-virus-card {
+  background: var(--surface);
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 16px;
+}
+.diag-virus-name { font-family: var(--font-title); font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+.diag-virus-desc { font-size: 0.75rem; color: var(--text2); line-height: 1.6; margin-bottom: 10px; }
+.diag-defense-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.73rem;
+  color: var(--text2);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+.diag-defense-step:last-of-type { border-bottom: none; }
+.diag-def-num {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #22c55e;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.diag-tools-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.diag-tool-tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 4px 12px;
+  background: rgba(0,212,255,0.07);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 6px;
+  color: var(--accent);
+}
+
+/* Related chips */
+.diag-related-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.diag-rel-chip {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.18s;
+}
+.diag-rel-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+/* No match */
+.diag-nomatch {
+  text-align: center;
+  padding: 48px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-top: 20px;
+}
+.diag-nomatch-title { font-family: var(--font-title); font-size: 0.95rem; color: #fff; margin-bottom: 10px; }
+.diag-nomatch-sub { font-size: 0.75rem; color: var(--text2); line-height: 1.6; }
+.diag-nomatch-sub em { color: var(--accent); font-style: normal; }
+
+/* ── Step checkboxes & status ─────────────────────────────── */
+.diag-step-status-wrap {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.diag-cb-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.2);
+  transition: all 0.18s;
+  user-select: none;
+  white-space: nowrap;
+}
+.diag-cb-label input { display: none; }
+
+.diag-cb-solved:hover  { border-color: rgba(34,197,94,0.5);  color: #22c55e; background: rgba(34,197,94,0.06); }
+.diag-cb-pending:hover { border-color: rgba(245,158,11,0.5); color: #f59e0b; background: rgba(245,158,11,0.06); }
+
+/* When checked */
+.diag-step-card.step-solved  .diag-cb-solved  { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,0.12); }
+.diag-step-card.step-pending .diag-cb-pending { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.12); }
+
+/* Card state tinting */
+.diag-step-card.step-solved  { border-color: rgba(34,197,94,0.35) !important; background: rgba(34,197,94,0.04); }
+.diag-step-card.step-pending { border-color: rgba(245,158,11,0.35) !important; background: rgba(245,158,11,0.04); }
+
+/* Left accent on solved/pending */
+.diag-step-card.step-solved::before  { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#22c55e; border-radius:8px 0 0 8px; }
+.diag-step-card.step-pending::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#f59e0b; border-radius:8px 0 0 8px; }
+
+/* ── PDF Export bar ──────────────────────────────────────── */
+.diag-pdf-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(0,212,255,0.03));
+  border: 1px solid rgba(0,212,255,0.22);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.diag-pdf-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.diag-pdf-bar-title {
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.diag-pdf-bar-sub {
+  font-size: 0.7rem;
+  color: var(--text2);
+}
+
+.diag-pdf-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, rgba(0,212,255,0.18), rgba(0,212,255,0.08));
+  border: 1px solid rgba(0,212,255,0.5);
+  border-radius: 7px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.diag-pdf-btn:hover {
+  background: rgba(0,212,255,0.25);
+  box-shadow: 0 0 20px rgba(0,212,255,0.2);
+  transform: translateY(-1px);
+}
+.diag-pdf-btn:active { transform: translateY(0); }

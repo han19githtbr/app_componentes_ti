@@ -123,6 +123,7 @@ function showView(name, el) {
   if(name === 'virus') initVirus();
   if(name === 'protection') initProtectionView();
   if(name === 'relations') initRelations();
+  if(name === 'diag') initDiag();
 }
 
 // ============================================================
@@ -182,7 +183,14 @@ function closePanel() {
 document.addEventListener('click', e => {
   const panel = document.getElementById('detail-panel');
   if(panel && panel.classList.contains('open') && !panel.contains(e.target)){
-    if(!e.target.closest('.leaf') && !e.target.closest('.cat-node') && !e.target.closest('.root-node')){
+    if(
+      !e.target.closest('.leaf') &&
+      !e.target.closest('.cat-node') &&
+      !e.target.closest('.root-node') &&
+      !e.target.closest('.diag-see-more') &&
+      !e.target.closest('.diag-rel-chip') &&
+      !e.target.closest('.rel-tag')
+    ){
       closePanel();
     }
   }
@@ -678,3 +686,872 @@ function initRelations() {
 //  STARTUP
 // ============================================================
 document.addEventListener('DOMContentLoaded', init);
+
+// ============================================================
+//  DIAGNÓSTICO — MOTOR DE BUSCA LOCAL (sem API externa)
+// ============================================================
+
+// Mapa de palavras-chave → componentes relevantes com peso
+const DIAG_KEYWORD_MAP = {
+  // === CALOR / RESFRIAMENTO ===
+  'esquenta':        [['cooler',10],['cpu',8],['gpu',7],['psu',4],['mobo',3]],
+  'superaquece':     [['cooler',10],['cpu',9],['gpu',8],['psu',4]],
+  'quente':          [['cooler',10],['cpu',8],['gpu',7]],
+  'calor':           [['cooler',9],['cpu',7],['gpu',6]],
+  'temperatura':     [['cooler',9],['cpu',7],['gpu',6]],
+  'thermal':         [['cooler',10],['cpu',8]],
+  'throttling':      [['cooler',10],['cpu',9]],
+  'desliga sozinho': [['cooler',9],['psu',8],['cpu',6]],
+  'desliga':         [['cooler',7],['psu',8],['mobo',5]],
+  'pasta':           [['cooler',10],['cpu',6]],
+  'fan':             [['cooler',10]],
+  'cooler':          [['cooler',10]],
+  'ventilador':      [['cooler',10],['gpu',5]],
+  'barulho':         [['cooler',7],['storage',6],['psu',5]],
+  'ruido':           [['cooler',7],['storage',6]],
+  'barulhento':      [['cooler',7],['storage',6]],
+
+  // === CPU / DESEMPENHO ===
+  'lento':           [['cpu',8],['ram',8],['storage',7],['processes',6],['so',5]],
+  'devagar':         [['cpu',7],['ram',8],['storage',7]],
+  'travando':        [['cpu',7],['ram',9],['storage',7],['gpu',6]],
+  'trava':           [['cpu',7],['ram',9],['storage',7]],
+  'travar':          [['cpu',7],['ram',9],['storage',7]],
+  'processador':     [['cpu',10],['mobo',5],['cooler',6]],
+  'cpu':             [['cpu',10],['cooler',6]],
+  'overclock':       [['overclock',10],['cpu',7],['cooler',8]],
+  'desempenho':      [['cpu',7],['ram',6],['gpu',6],['storage',5]],
+  'performance':     [['cpu',7],['ram',6],['gpu',6]],
+  'lentidão':        [['cpu',7],['ram',8],['storage',7],['processes',6]],
+
+  // === RAM / MEMÓRIA ===
+  'memória':         [['ram',10],['processes',5],['vm',4]],
+  'ram':             [['ram',10]],
+  'memoria':         [['ram',10]],
+  'pente':           [['ram',10],['mobo',5]],
+  'módulo':          [['ram',9]],
+  'bsod':            [['ram',9],['cpu',7],['storage',7],['drivers',8],['so',7]],
+  'tela azul':       [['ram',9],['cpu',7],['storage',7],['drivers',8],['so',7]],
+  'tela-azul':       [['ram',9],['drivers',8],['so',7]],
+  'dump':            [['ram',8],['so',7],['drivers',7]],
+  'erro de memória': [['ram',10],['mobo',5]],
+
+  // === GPU / VÍDEO ===
+  'gpu':             [['gpu',10],['drivers',7],['pcie',6],['psu',6]],
+  'placa de vídeo':  [['gpu',10],['drivers',7],['pcie',6]],
+  'video':           [['gpu',8],['drivers',7]],
+  'vídeo':           [['gpu',8],['drivers',7]],
+  'artefato':        [['gpu',10],['ram',6]],
+  'glitch':          [['gpu',9],['drivers',6]],
+  'tela preta':      [['gpu',8],['drivers',7],['mobo',5],['bios',4]],
+  'monitor':         [['gpu',7],['mobo',5]],
+  'resolução':       [['gpu',7],['drivers',6]],
+  'fps':             [['gpu',9],['cpu',7],['ram',5]],
+  'jogo':            [['gpu',8],['cpu',7],['ram',7],['storage',5]],
+  'jogar':           [['gpu',8],['cpu',7],['ram',7]],
+  'game':            [['gpu',8],['cpu',7],['ram',7]],
+  'crash':           [['gpu',7],['ram',7],['cpu',6],['storage',5],['drivers',7]],
+  'crashando':       [['gpu',7],['ram',7],['cpu',6],['drivers',7]],
+
+  // === ARMAZENAMENTO ===
+  'disco':           [['storage',10],['filesystem',8]],
+  'hd':              [['storage',10],['filesystem',7]],
+  'ssd':             [['storage',10],['filesystem',7]],
+  'armazenamento':   [['storage',10]],
+  'cheio':           [['storage',9],['filesystem',7]],
+  'espaço':          [['storage',8],['filesystem',6]],
+  'arquivo':         [['filesystem',8],['storage',6]],
+  'corrompido':      [['filesystem',10],['storage',8]],
+  'corrupção':       [['filesystem',10],['storage',8]],
+  'perdeu dados':    [['storage',10],['filesystem',9]],
+  'sumiu':           [['storage',8],['filesystem',8]],
+  'partição':        [['filesystem',9],['storage',7]],
+  'chkdsk':          [['filesystem',10],['storage',8]],
+  'smart':           [['storage',10]],
+  'barulho disco':   [['storage',10]],
+
+  // === BIOS / BOOT / PLACA-MÃE ===
+  'não liga':        [['bios',10],['psu',9],['mobo',8],['post',7]],
+  'nao liga':        [['bios',10],['psu',9],['mobo',8]],
+  'post':            [['post',10],['bios',8]],
+  'boot':            [['boot_seq',10],['bios',8],['so',7]],
+  'bios':            [['bios',10],['cmos',7]],
+  'uefi':            [['uefi',10],['bios',7]],
+  'cmos':            [['cmos',10],['bios',7]],
+  'beep':            [['post',10],['bios',7],['ram',6],['cpu',6]],
+  'placa-mãe':       [['mobo',10],['bios',6]],
+  'placa mae':       [['mobo',10],['bios',6]],
+  'reinicia':        [['psu',8],['cooler',7],['bios',6],['so',6],['ram',6]],
+  'reiniciar':       [['psu',7],['cooler',7],['bios',6],['so',6]],
+  'reinicia sozinho':[['psu',9],['cooler',8],['ram',7]],
+  'fonte':           [['psu',10],['mobo',6]],
+
+  // === SISTEMA OPERACIONAL ===
+  'windows':         [['windows',10],['so',8],['drivers',6]],
+  'linux':           [['linux',10],['so',8],['kernel',6]],
+  'macos':           [['macos',10],['so',8]],
+  'sistema':         [['so',8],['windows',6],['kernel',5]],
+  'atualização':     [['windows',8],['so',7],['drivers',6]],
+  'update':          [['windows',8],['so',7]],
+  'driver':          [['drivers',10],['gpu',6],['nic',5]],
+  'drivers':         [['drivers',10],['gpu',6],['nic',5]],
+  'reinstalar':      [['so',9],['windows',8],['apps',6]],
+  'formatação':      [['so',10],['filesystem',8],['storage',6]],
+  'formatar':        [['so',10],['filesystem',8]],
+  'kernel':          [['kernel',10],['so',7]],
+  'processo':        [['processes',10],['so',7],['cpu',5]],
+  'tarefa':          [['processes',9],['so',6]],
+
+  // === REDE / INTERNET ===
+  'internet':        [['nic',9],['wifi',9],['dns',7],['tcpip',7],['dhcp',6]],
+  'rede':            [['nic',9],['wifi',8],['tcpip',7],['dhcp',6],['firewall',5]],
+  'wifi':            [['wifi',10],['nic',7],['dhcp',6]],
+  'wi-fi':           [['wifi',10],['nic',7]],
+  'sem internet':    [['nic',9],['wifi',9],['dns',8],['dhcp',7]],
+  'conexão':         [['nic',8],['wifi',8],['tcpip',7],['dns',6]],
+  'conectar':        [['nic',8],['wifi',8],['dns',6],['dhcp',6]],
+  'dns':             [['dns',10],['tcpip',6]],
+  'dhcp':            [['dhcp',10],['nic',6]],
+  'ip':              [['tcpip',9],['dhcp',8],['nic',6]],
+  'ping':            [['tcpip',9],['nic',7],['firewall',5]],
+  'firewall':        [['firewall',10],['nic',5]],
+  'vpn':             [['vpn',10],['firewall',6],['nic',5]],
+  'cabo':            [['nic',8],['mobo',5]],
+  'ethernet':        [['nic',9],['tcpip',6]],
+  'roteador':        [['wifi',8],['dhcp',7],['nic',6]],
+
+  // === VÍRUS / SEGURANÇA ===
+  'vírus':           [['virus_cls',10],['malware',9],['antivirus',8],['filesystem',5]],
+  'virus':           [['virus_cls',10],['malware',9],['antivirus',8]],
+  'malware':         [['malware',10],['antivirus',8],['firewall',6]],
+  'ransomware':      [['ransomware',10],['antivirus',7],['filesystem',7]],
+  'trojan':          [['malware',9],['antivirus',7]],
+  'infectado':       [['virus_cls',9],['malware',9],['antivirus',8]],
+  'hackeado':        [['malware',8],['rootkit',8],['firewall',7]],
+  'rootkit':         [['rootkit',10],['malware',7]],
+  'spyware':         [['malware',9],['antivirus',7]],
+  'antivirus':       [['antivirus',10],['virus_cls',6]],
+  'antivírus':       [['antivirus',10],['virus_cls',6]],
+  'segurança':       [['antivirus',7],['firewall',7],['criptografia',6]],
+
+  // === APLICATIVOS ===
+  'aplicativo':      [['apps',10],['so',5],['drivers',4]],
+  'programa':        [['apps',10],['so',5]],
+  'software':        [['apps',8],['so',5]],
+  'instalação':      [['apps',8],['so',6]],
+  'não abre':        [['apps',9],['so',6],['drivers',5]],
+  'nao abre':        [['apps',9],['so',6]],
+  'erro':            [['apps',7],['so',6],['drivers',6],['filesystem',5]],
+  'dll':             [['apps',9],['so',6],['drivers',5]],
+  'vcruntime':       [['apps',10]],
+};
+
+// Mapa de componentes para simBlock (onde há repair steps)
+const COMP_TO_SIMBLOCK = {
+  'cpu': 'cpu', 'cooler': 'cpu', 'overclock': 'cpu',
+  'ram': 'ram',
+  'storage': 'storage', 'filesystem': 'filesystem',
+  'gpu': 'gpu', 'pcie': 'gpu',
+  'nic': 'net', 'wifi': 'net', 'tcpip': 'net', 'dns': 'net', 'dhcp': 'net', 'firewall': 'net', 'vpn': 'net',
+  'so': 'so', 'windows': 'so', 'linux': 'so', 'macos': 'so', 'kernel': 'so', 'drivers': 'so', 'processes': 'so',
+  'apps': 'apps',
+  'bios': 'bios', 'post': 'bios', 'cmos': 'bios', 'boot_seq': 'bios', 'uefi': 'bios',
+  'psu': 'cpu', 'mobo': 'bios',
+  'virus_cls': 'filesystem', 'malware': 'filesystem', 'ransomware': 'filesystem',
+  'rootkit': 'filesystem', 'antivirus': 'filesystem',
+};
+
+// Mapa de ícones de categoria
+const COMP_ICONS = {
+  'cpu':'⚙️','cooler':'❄️','ram':'💾','gpu':'🎮','storage':'💿','filesystem':'📁',
+  'so':'💻','windows':'🪟','linux':'🐧','macos':'🍎','drivers':'🔌','kernel':'⚛️','processes':'⚙️',
+  'bios':'🔑','post':'🟢','cmos':'🔋','boot_seq':'🚀','uefi':'🛡️','overclock':'📈',
+  'nic':'📡','wifi':'📶','dns':'🔍','dhcp':'📋','tcpip':'📡','firewall':'🔥','vpn':'🔒',
+  'psu':'🔌','mobo':'🟫','pcie':'🔗',
+  'virus_cls':'🦠','malware':'☠️','ransomware':'🔐','rootkit':'👻','antivirus':'🛡️','criptografia':'🔑',
+  'apps':'📱',
+};
+
+function initDiag() {
+  const ta = document.getElementById('diag-problem-input');
+  if (ta && !ta._diagInit) {
+    ta._diagInit = true;
+    ta.addEventListener('input', () => {
+      document.getElementById('diag-char').textContent = ta.value.length;
+    });
+  }
+}
+
+function diagChip(el) {
+  const ta = document.getElementById('diag-problem-input');
+  ta.value = el.textContent.replace(/^[^\s]+\s/, '');
+  document.getElementById('diag-char').textContent = ta.value.length;
+  ta.focus();
+}
+
+function diagAnalyze() {
+  const problem = (document.getElementById('diag-problem-input').value || '').trim().toLowerCase();
+  if (problem.length < 5) {
+    const ta = document.getElementById('diag-problem-input');
+    ta.style.border = '1px solid rgba(239,68,68,0.7)';
+    setTimeout(() => ta.style.border = '', 1800);
+    return;
+  }
+
+  // Show loading briefly for UX
+  document.getElementById('diag-loading').classList.remove('hidden');
+  document.getElementById('diag-result').classList.add('hidden');
+  document.querySelector('.diag-input-wrap').style.opacity = '0.4';
+
+  setTimeout(() => {
+    const result = diagSearch(problem);
+    document.getElementById('diag-loading').classList.add('hidden');
+    document.querySelector('.diag-input-wrap').style.opacity = '1';
+    diagRenderResult(result, problem);
+    document.getElementById('diag-result').classList.remove('hidden');
+    document.getElementById('diag-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 600);
+}
+
+function diagSearch(text) {
+  if (!DATA_STORE) return null;
+
+  // 1) Score components via keyword matching
+  const scores = {};
+  const matchedKeywords = [];
+
+  for (const [kw, hits] of Object.entries(DIAG_KEYWORD_MAP)) {
+    if (text.includes(kw)) {
+      matchedKeywords.push(kw);
+      hits.forEach(([comp, weight]) => {
+        scores[comp] = (scores[comp] || 0) + weight;
+      });
+    }
+  }
+
+  // 2) Also do word-level fuzzy match against component names/descs
+  const words = text.split(/\s+/).filter(w => w.length > 3);
+  words.forEach(word => {
+    Object.entries(DATA_STORE.components || {}).forEach(([key, comp]) => {
+      const name = (comp.name || '').toLowerCase();
+      const desc = (comp.desc || '').toLowerCase();
+      if (name.includes(word) || desc.includes(word)) {
+        scores[key] = (scores[key] || 0) + 3;
+      }
+    });
+  });
+
+  // 3) Rank components
+  const ranked = Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
+
+  if (ranked.length === 0) {
+    return { noMatch: true };
+  }
+
+  // 4) Collect unique simBlocks to pull repair steps from
+  const simBlockIds = [];
+  ranked.forEach(([comp]) => {
+    const sb = COMP_TO_SIMBLOCK[comp];
+    if (sb && !simBlockIds.includes(sb)) simBlockIds.push(sb);
+  });
+
+  // 5) Gather repair steps from the top simBlocks (max 2 blocks, max 4 steps each)
+  const allSteps = [];
+  const lang = currentLang || 'pt';
+  simBlockIds.slice(0, 2).forEach(sbId => {
+    const block = (DATA_STORE.simBlocks || []).find(b => b.id === sbId);
+    if (!block || !block.repairs) return;
+    const steps = (block.repairs.steps[lang] || block.repairs.steps['pt'] || []);
+    // Prioritize easy steps first, then medium, then hard
+    const sorted = [...steps].sort((a, b) => {
+      const order = { easy: 0, medium: 1, hard: 2 };
+      return (order[a.level] || 0) - (order[b.level] || 0);
+    });
+    sorted.slice(0, 4).forEach(s => {
+      allSteps.push({ ...s, source: sbId });
+    });
+  });
+
+  // 6) Also check viruses if relevant
+  const virusMatch = [];
+  if (scores['virus_cls'] > 0 || scores['malware'] > 0 || scores['ransomware'] > 0 || scores['rootkit'] > 0) {
+    const topVirus = findTopVirus(text, lang);
+    if (topVirus) virusMatch.push(topVirus);
+  }
+
+  // 7) Collect component details for causes section
+  const causes = ranked.slice(0, 4).map(([comp, score]) => ({
+    comp,
+    score,
+    data: DATA_STORE.components[comp],
+    icon: COMP_ICONS[comp] || '🔧',
+  })).filter(c => c.data);
+
+  // 8) Determine severity
+  const topScore = ranked[0] ? ranked[0][1] : 0;
+  const severity = topScore >= 18 ? 'crítico' : topScore >= 12 ? 'alto' : topScore >= 6 ? 'médio' : 'baixo';
+
+  return { causes, allSteps, virusMatch, severity, matchedKeywords, ranked };
+}
+
+function findTopVirus(text, lang) {
+  const viruses = DATA_STORE.viruses || [];
+  for (const v of viruses) {
+    const name = (typeof v.name === 'object' ? v.name['pt'] : v.name).toLowerCase();
+    const desc = (typeof v.desc === 'object' ? v.desc['pt'] : v.desc).toLowerCase();
+    if (text.includes(name) || desc.split(' ').some(w => w.length > 5 && text.includes(w))) {
+      return v;
+    }
+  }
+  // If generic virus keywords matched, return first virus as reference
+  if (text.includes('vírus') || text.includes('virus') || text.includes('malware')) {
+    return viruses[1] || viruses[0]; // return malware entry
+  }
+  return null;
+}
+
+const SEVERITY_STYLE = {
+  'baixo':   { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.25)',   label: '🟢 BAIXO' },
+  'médio':   { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)',  label: '🟡 MÉDIO' },
+  'alto':    { color: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.25)',  label: '🟠 ALTO' },
+  'crítico': { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)',   label: '🔴 CRÍTICO' },
+};
+const LEVEL_STYLE = {
+  easy:   { color: '#22c55e', bg: 'rgba(34,197,94,0.12)',   label: 'Fácil' },
+  medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  label: 'Moderado' },
+  hard:   { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   label: 'Avançado' },
+};
+
+// Store last diagnosis for PDF export
+let _diagLastResult = null;
+let _diagLastProblem = '';
+
+function diagRenderResult(result, problem) {
+  _diagLastResult = result;
+  _diagLastProblem = problem;
+
+  const container = document.getElementById('diag-result-inner');
+
+  if (!result || result.noMatch) {
+    container.innerHTML = `
+      <div class="diag-nomatch">
+        <div style="font-size:2rem;margin-bottom:12px;">🤔</div>
+        <div class="diag-nomatch-title">Problema não identificado na base de dados</div>
+        <div class="diag-nomatch-sub">Tente usar termos mais específicos como: <em>tela azul, superaquece, sem internet, não liga, vírus, lento</em>...</div>
+      </div>`;
+    return;
+  }
+
+  const { causes, allSteps, virusMatch, severity, matchedKeywords } = result;
+  const sev = SEVERITY_STYLE[severity] || SEVERITY_STYLE['médio'];
+  const lang = currentLang || 'pt';
+  let html = '';
+
+  // ── Header ───────────────────────────────────────────────
+  const mainCause = causes[0];
+  const title = mainCause ? `Diagnóstico: ${mainCause.data.name}` : 'Diagnóstico Concluído';
+  html += `
+    <div class="diag-result-header" style="background:${sev.bg};border:1px solid ${sev.border};">
+      <div class="diag-result-title">${title}</div>
+      <div style="margin:6px 0;">
+        <span class="diag-sev-badge" style="background:${sev.bg};border:1px solid ${sev.border};color:${sev.color};">${sev.label}</span>
+      </div>
+      <div class="diag-result-summary">
+        ${mainCause ? mainCause.data.desc.split('.')[0] + '.' : ''}
+        ${causes.length > 1 ? `Também verifique: ${causes.slice(1,3).map(c=>c.data.name).join(', ')}.` : ''}
+      </div>
+      ${matchedKeywords.length ? `<div class="diag-keywords">Palavras-chave detectadas: ${matchedKeywords.slice(0,6).map(k=>`<span class="diag-kw">${k}</span>`).join('')}</div>` : ''}
+    </div>`;
+
+  // ── Causas prováveis ─────────────────────────────────────
+  const maxScore = causes[0] ? causes[0].score : 1;
+  html += `<div class="diag-section">
+    <div class="diag-section-label">// causas prováveis</div>`;
+  causes.forEach((c) => {
+    const pct = Math.round((c.score / maxScore) * 100);
+    const barColor = pct > 75 ? '#ef4444' : pct > 45 ? '#f59e0b' : '#22c55e';
+    const impacts = (c.data.impacts || []).slice(0, 2);
+    html += `
+      <div class="diag-cause-card" style="border-left:3px solid ${c.data.color || '#00d4ff'}40;">
+        <div class="diag-cause-top">
+          <span class="diag-cause-icon">${c.icon}</span>
+          <div style="flex:1;">
+            <div class="diag-cause-name" style="color:${c.data.color || '#fff'}">${c.data.name}</div>
+            <div class="diag-cause-type">${c.data.type || ''}</div>
+          </div>
+          <div class="diag-prob-wrap">
+            <div class="diag-prob-num" style="color:${barColor}">${pct}%</div>
+            <div class="diag-prob-track"><div class="diag-prob-fill" style="width:${pct}%;background:${barColor}"></div></div>
+          </div>
+        </div>
+        ${impacts.length ? `<div class="diag-impacts">${impacts.map(im=>`<span class="diag-impact-item">⚠ ${im}</span>`).join('')}</div>` : ''}
+        <button class="diag-see-more" onclick="event.stopPropagation(); openPanel('${c.comp}')">
+          Ver detalhes do componente →
+        </button>
+      </div>`;
+  });
+  html += '</div>';
+
+  // ── Passo a passo com checkboxes ─────────────────────────
+  if (allSteps.length > 0) {
+    html += `<div class="diag-section">
+      <div class="diag-section-label">// passo a passo — marque os passos conforme executa</div>`;
+    allSteps.forEach((step, i) => {
+      const lvl = LEVEL_STYLE[step.level] || LEVEL_STYLE.easy;
+      html += `
+        <div class="diag-step-card" id="diag-step-${i}" style="animation-delay:${i * 0.06}s">
+          <div class="diag-step-header">
+            <div class="diag-step-num">${String(i+1).padStart(2,'0')}</div>
+            <span class="diag-step-icon">${step.icon || '🔧'}</span>
+            <div class="diag-step-title">${step.title}</div>
+            <span class="diag-diff-badge" style="background:${lvl.bg};color:${lvl.color};">${lvl.label}</span>
+            <div class="diag-step-status-wrap">
+              <label class="diag-cb-label diag-cb-solved">
+                <input type="checkbox" class="diag-cb" data-step="${i}" data-status="solved" onchange="diagToggleStep(this)">
+                <span>✓ Resolvido</span>
+              </label>
+              <label class="diag-cb-label diag-cb-pending">
+                <input type="checkbox" class="diag-cb" data-step="${i}" data-status="pending" onchange="diagToggleStep(this)">
+                <span>⏳ Pendente</span>
+              </label>
+            </div>
+          </div>
+          <div class="diag-step-desc">${step.desc}</div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  // ── Vírus info ───────────────────────────────────────────
+  if (virusMatch.length > 0) {
+    const v = virusMatch[0];
+    const vname = typeof v.name === 'object' ? v.name[lang] : v.name;
+    const vdesc = typeof v.desc === 'object' ? v.desc[lang] : v.desc;
+    const defSteps = (v.protection && v.protection.defenseSteps && (v.protection.defenseSteps[lang] || v.protection.defenseSteps['pt'])) || [];
+    html += `<div class="diag-section">
+      <div class="diag-section-label">// ameaça identificada — plano de defesa</div>
+      <div class="diag-virus-card" style="border-color:${v.color}44;">
+        <div class="diag-virus-name" style="color:${v.color}">${vname}</div>
+        <div class="diag-virus-desc">${vdesc}</div>
+        ${defSteps.length ? `<div class="diag-section-label" style="margin-top:14px;">passos de defesa</div>
+        ${defSteps.map((s,i)=>`<div class="diag-defense-step"><span class="diag-def-num">${String(i+1).padStart(2,'0')}</span>${s}</div>`).join('')}` : ''}
+        ${v.protection && v.protection.tools ? `<div class="diag-tools-row">${v.protection.tools.map(tool=>`<span class="diag-tool-tag">🛡️ ${tool}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // ── Componentes relacionados ─────────────────────────────
+  const relComps = new Set();
+  causes.forEach(c => { (c.data.relations || []).forEach(r => relComps.add(r)); });
+  if (relComps.size > 0) {
+    html += `<div class="diag-section">
+      <div class="diag-section-label">// componentes relacionados — clique para ver detalhes</div>
+      <div class="diag-related-row">`;
+    [...relComps].slice(0, 8).forEach(cid => {
+      const cd = DATA_STORE.components[cid];
+      if (cd) {
+        html += `<div class="diag-rel-chip" style="background:${cd.color}10;border-color:${cd.color}44;color:${cd.color};" onclick="event.stopPropagation(); openPanel('${cid}')">
+          ${COMP_ICONS[cid] || ''} ${cd.name}
+        </div>`;
+      }
+    });
+    html += '</div></div>';
+  }
+
+  // ── Botão emitir relatório ───────────────────────────────
+  html += `
+    <div class="diag-pdf-bar">
+      <div class="diag-pdf-info">
+        <span style="font-size:1.1rem;">📄</span>
+        <div>
+          <div class="diag-pdf-bar-title">Relatório de Diagnóstico</div>
+          <div class="diag-pdf-bar-sub">Marque os passos como Resolvido ou Pendente antes de emitir</div>
+        </div>
+      </div>
+      <button class="diag-pdf-btn" onclick="diagExportPDF()">
+        ⬇ Emitir Relatório PDF
+      </button>
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+// Toggle step status — garante exclusividade resolvido/pendente
+function diagToggleStep(cb) {
+  const card = document.getElementById(`diag-step-${cb.dataset.step}`);
+  const other = card.querySelector(`.diag-cb[data-status="${cb.dataset.status === 'solved' ? 'pending' : 'solved'}"]`);
+  if (cb.checked && other && other.checked) other.checked = false;
+  // Visual feedback on the card
+  card.classList.remove('step-solved', 'step-pending');
+  const solvedCb  = card.querySelector('.diag-cb[data-status="solved"]');
+  const pendingCb = card.querySelector('.diag-cb[data-status="pending"]');
+  if (solvedCb && solvedCb.checked)   card.classList.add('step-solved');
+  if (pendingCb && pendingCb.checked) card.classList.add('step-pending');
+}
+
+// ── PDF Export ────────────────────────────────────────────────
+function diagExportPDF() {
+  const result = _diagLastResult;
+  if (!result || result.noMatch) return;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, H = 297;
+  const ML = 18, MR = 18, MT = 20;
+  let y = MT;
+
+  // ── Palette ──────────────────────────────────────────────
+  const COL = {
+    dark:    [6,  10, 15],
+    surface: [15, 24, 35],
+    accent:  [0, 212, 255],
+    white:   [255,255,255],
+    text:    [200,218,240],
+    text2:   [122,153,187],
+    border:  [36, 53, 80],
+    green:   [34, 197, 94],
+    yellow:  [245,158,11],
+    red:     [239, 68, 68],
+    orange:  [249,115,22],
+  };
+
+  const sevColor = {
+    'baixo':   COL.green,
+    'médio':   COL.yellow,
+    'alto':    COL.orange,
+    'crítico': COL.red,
+  };
+  const lvlColor = { easy: COL.green, medium: COL.yellow, hard: COL.red };
+  const lvlLabel = { easy: 'Fácil', medium: 'Moderado', hard: 'Avançado' };
+
+  const lang = currentLang || 'pt';
+  const { causes, allSteps, virusMatch, severity, matchedKeywords } = result;
+  const sev = sevColor[severity] || COL.yellow;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const mainCause = causes[0];
+
+  // Helper: check page overflow
+  function checkPage(needed = 10) {
+    if (y + needed > H - 18) {
+      doc.addPage();
+      // Page background
+      doc.setFillColor(...COL.dark);
+      doc.rect(0, 0, W, H, 'F');
+      // Top accent line
+      doc.setDrawColor(...COL.accent);
+      doc.setLineWidth(0.4);
+      doc.line(ML, 10, W - MR, 10);
+      y = 18;
+    }
+  }
+
+  function setFont(style, size, color) {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    doc.setTextColor(...(color || COL.text));
+  }
+
+  function wrappedText(text, x, maxW, lineH) {
+    const lines = doc.splitTextToSize(String(text), maxW);
+    lines.forEach(line => {
+      checkPage(lineH + 2);
+      doc.text(line, x, y);
+      y += lineH;
+    });
+    return lines.length;
+  }
+
+  // ── PAGE 1 BACKGROUND ────────────────────────────────────
+  doc.setFillColor(...COL.dark);
+  doc.rect(0, 0, W, H, 'F');
+
+  // Grid pattern (subtle)
+  doc.setDrawColor(0, 212, 255, 0.04);
+  doc.setLineWidth(0.1);
+  for (let gx = 0; gx < W; gx += 12) doc.line(gx, 0, gx, H);
+  for (let gy = 0; gy < H; gy += 12) doc.line(0, gy, W, gy);
+
+  // Top accent bar
+  doc.setFillColor(...COL.accent);
+  doc.rect(0, 0, W, 2, 'F');
+
+  // ── LOGO / HEADER ────────────────────────────────────────
+  y = 14;
+  // Left brand
+  setFont('bold', 16, COL.accent);
+  doc.text('ARQ_COMP', ML, y);
+  setFont('normal', 7, COL.text2);
+  doc.text('// Sistemas Computacionais', ML, y + 5);
+
+  // Right: date
+  setFont('normal', 7, COL.text2);
+  doc.text(dateStr, W - MR, y, { align: 'right' });
+  doc.text('Relatório de Diagnóstico', W - MR, y + 5, { align: 'right' });
+
+  y = 26;
+  doc.setDrawColor(...COL.border);
+  doc.setLineWidth(0.3);
+  doc.line(ML, y, W - MR, y);
+  y += 8;
+
+  // ── TITLE BLOCK ──────────────────────────────────────────
+  // Severity badge box
+  doc.setFillColor(...sev);
+  doc.roundedRect(ML, y - 4, 32, 7, 1.5, 1.5, 'F');
+  setFont('bold', 7, COL.dark);
+  doc.text(severity.toUpperCase(), ML + 16, y + 0.5, { align: 'center' });
+
+  y += 8;
+  setFont('bold', 14, COL.white);
+  doc.text(mainCause ? `Diagnostico: ${mainCause.data.name}` : 'Diagnostico Completo', ML, y);
+  y += 7;
+
+  // Problem description box
+  doc.setFillColor(...COL.surface);
+  doc.setDrawColor(...COL.border);
+  doc.setLineWidth(0.3);
+  const problemLines = doc.splitTextToSize(_diagLastProblem || '—', W - ML - MR - 8);
+  const pbH = problemLines.length * 5 + 10;
+  doc.roundedRect(ML, y, W - ML - MR, pbH, 2, 2, 'FD');
+  setFont('normal', 7, COL.text2);
+  doc.text('Problema relatado:', ML + 4, y + 6);
+  setFont('normal', 8, COL.text);
+  problemLines.forEach((line, li) => {
+    doc.text(line, ML + 4, y + 12 + li * 5);
+  });
+  y += pbH + 6;
+
+  // Keywords
+  if (matchedKeywords && matchedKeywords.length) {
+    setFont('normal', 6.5, COL.text2);
+    doc.text('Palavras-chave detectadas: ' + matchedKeywords.slice(0,6).join(', '), ML, y);
+    y += 8;
+  }
+
+  // ── CAUSES ──────────────────────────────────────────────
+  checkPage(14);
+  // Section header
+  doc.setFillColor(...COL.accent);
+  doc.rect(ML, y, 2, 5, 'F');
+  setFont('bold', 9, COL.accent);
+  doc.text('CAUSAS PROVAVEIS', ML + 5, y + 4);
+  y += 10;
+
+  const maxScore = causes[0] ? causes[0].score : 1;
+  causes.forEach(c => {
+    checkPage(22);
+    const pct = Math.round((c.score / maxScore) * 100);
+    const bColor = pct > 75 ? COL.red : pct > 45 ? COL.yellow : COL.green;
+
+    // Card background
+    doc.setFillColor(...COL.surface);
+    doc.setDrawColor(...COL.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(ML, y, W - ML - MR, 18, 2, 2, 'FD');
+
+    // Left accent
+    doc.setFillColor(...(c.data.color ? hexToRgb(c.data.color) : COL.accent));
+    doc.rect(ML, y, 2, 18, 'F');
+
+    setFont('bold', 9, COL.white);
+    doc.text(c.data.name, ML + 6, y + 6);
+    setFont('normal', 6.5, COL.text2);
+    doc.text(c.data.type || '', ML + 6, y + 11);
+
+    // Probability bar
+    const barX = W - MR - 45;
+    setFont('bold', 8, bColor);
+    doc.text(`${pct}%`, barX - 8, y + 7, { align: 'right' });
+    doc.setFillColor(...COL.border);
+    doc.roundedRect(barX, y + 3, 40, 3, 1, 1, 'F');
+    doc.setFillColor(...bColor);
+    doc.roundedRect(barX, y + 3, 40 * pct / 100, 3, 1, 1, 'F');
+
+    // Impact
+    if (c.data.impacts && c.data.impacts[0]) {
+      setFont('normal', 6, [255,150,150]);
+      doc.text('! ' + c.data.impacts[0].substring(0, 70), ML + 6, y + 15.5);
+    }
+
+    y += 22;
+  });
+
+  // ── STEPS ────────────────────────────────────────────────
+  if (allSteps.length > 0) {
+    checkPage(16);
+    y += 2;
+    doc.setFillColor(...COL.accent);
+    doc.rect(ML, y, 2, 5, 'F');
+    setFont('bold', 9, COL.accent);
+    doc.text('PASSO A PASSO DA SOLUCAO', ML + 5, y + 4);
+    y += 10;
+
+    allSteps.forEach((step, i) => {
+      // Read status from checkboxes
+      const card = document.getElementById(`diag-step-${i}`);
+      const solvedCb  = card && card.querySelector('.diag-cb[data-status="solved"]');
+      const pendingCb = card && card.querySelector('.diag-cb[data-status="pending"]');
+      const isSolved  = solvedCb  && solvedCb.checked;
+      const isPending = pendingCb && pendingCb.checked;
+
+      const descLines = doc.splitTextToSize(step.desc || '', W - ML - MR - 14);
+      const cardH = 14 + descLines.length * 4.5;
+      checkPage(cardH + 4);
+
+      const lc = lvlColor[step.level] || COL.green;
+
+      // Card bg
+      doc.setFillColor(...COL.surface);
+      doc.setDrawColor(...COL.border);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(ML, y, W - ML - MR, cardH, 2, 2, 'FD');
+
+      // Status stripe on left
+      if (isSolved)       { doc.setFillColor(...COL.green);  doc.rect(ML, y, 3, cardH, 'F'); }
+      else if (isPending) { doc.setFillColor(...COL.yellow); doc.rect(ML, y, 3, cardH, 'F'); }
+      else                { doc.setFillColor(...COL.border); doc.rect(ML, y, 3, cardH, 'F'); }
+
+      // Step number circle
+      doc.setFillColor(...lc);
+      doc.circle(ML + 10, y + 7, 4, 'F');
+      setFont('bold', 7, COL.dark);
+      doc.text(String(i + 1).padStart(2, '0'), ML + 10, y + 8.2, { align: 'center' });
+
+      // Title
+      setFont('bold', 8.5, COL.white);
+      doc.text(step.title, ML + 17, y + 6);
+
+      // Difficulty badge
+      const badgeW = 22;
+      doc.setFillColor(...lc);
+      doc.roundedRect(W - MR - badgeW, y + 3, badgeW, 5.5, 1.5, 1.5, 'F');
+      setFont('bold', 6, COL.dark);
+      doc.text(lvlLabel[step.level] || 'Facil', W - MR - badgeW / 2, y + 6.7, { align: 'center' });
+
+      // Status label
+      if (isSolved) {
+        setFont('bold', 7, COL.green);
+        doc.text('✓ RESOLVIDO', ML + 17, y + 11.5);
+      } else if (isPending) {
+        setFont('bold', 7, COL.yellow);
+        doc.text('⏳ PENDENTE', ML + 17, y + 11.5);
+      } else {
+        setFont('normal', 7, COL.text2);
+        doc.text('Nao verificado', ML + 17, y + 11.5);
+      }
+
+      // Description
+      setFont('normal', 7, COL.text2);
+      descLines.forEach((line, li) => {
+        doc.text(line, ML + 6, y + 14 + li * 4.5);
+      });
+
+      y += cardH + 3;
+    });
+  }
+
+  // ── VIRUS SECTION ────────────────────────────────────────
+  if (virusMatch && virusMatch.length > 0) {
+    const v = virusMatch[0];
+    const vname = typeof v.name === 'object' ? v.name[lang] : v.name;
+    const defSteps = (v.protection && v.protection.defenseSteps && (v.protection.defenseSteps[lang] || v.protection.defenseSteps['pt'])) || [];
+    checkPage(16);
+    y += 2;
+    doc.setFillColor(...COL.red);
+    doc.rect(ML, y, 2, 5, 'F');
+    setFont('bold', 9, COL.red);
+    doc.text('AMEACA IDENTIFICADA: ' + vname.toUpperCase(), ML + 5, y + 4);
+    y += 10;
+
+    defSteps.forEach((s, i) => {
+      const lines = doc.splitTextToSize(`${i+1}. ${s}`, W - ML - MR - 8);
+      checkPage(lines.length * 4.5 + 4);
+      setFont('normal', 7, COL.text);
+      lines.forEach(line => { doc.text(line, ML + 4, y); y += 4.5; });
+    });
+
+    if (v.protection && v.protection.tools) {
+      checkPage(10);
+      y += 2;
+      setFont('bold', 7, COL.accent);
+      doc.text('Ferramentas: ' + v.protection.tools.join(' · '), ML, y);
+      y += 7;
+    }
+  }
+
+  // ── SUMMARY BOX ─────────────────────────────────────────
+  checkPage(36);
+  y += 4;
+  const solvedSteps  = allSteps.filter((_,i) => { const c = document.getElementById(`diag-step-${i}`); return c && c.querySelector('.diag-cb[data-status="solved"]')?.checked; });
+  const pendingSteps = allSteps.filter((_,i) => { const c = document.getElementById(`diag-step-${i}`); return c && c.querySelector('.diag-cb[data-status="pending"]')?.checked; });
+  const noneSteps    = allSteps.filter((_,i) => { const c = document.getElementById(`diag-step-${i}`); const s = c && c.querySelector('.diag-cb[data-status="solved"]')?.checked; const p = c && c.querySelector('.diag-cb[data-status="pending"]')?.checked; return !s && !p; });
+
+  doc.setFillColor(...COL.surface);
+  doc.setDrawColor(...COL.accent);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(ML, y, W - ML - MR, 32, 2, 2, 'FD');
+
+  setFont('bold', 9, COL.accent);
+  doc.text('RESUMO DO ATENDIMENTO', ML + 5, y + 7);
+
+  const cols = [ML + 5, ML + 60, ML + 115];
+  // Resolved
+  doc.setFillColor(...COL.green);
+  doc.circle(cols[0] + 3, y + 16, 3, 'F');
+  setFont('bold', 11, COL.green);
+  doc.text(String(solvedSteps.length), cols[0] + 10, y + 17.5);
+  setFont('normal', 7, COL.text2);
+  doc.text('Passos Resolvidos', cols[0] + 10, y + 22);
+  // Pending
+  doc.setFillColor(...COL.yellow);
+  doc.circle(cols[1] + 3, y + 16, 3, 'F');
+  setFont('bold', 11, COL.yellow);
+  doc.text(String(pendingSteps.length), cols[1] + 10, y + 17.5);
+  setFont('normal', 7, COL.text2);
+  doc.text('Passos Pendentes', cols[1] + 10, y + 22);
+  // Not checked
+  doc.setFillColor(...COL.border);
+  doc.circle(cols[2] + 3, y + 16, 3, 'F');
+  setFont('bold', 11, COL.text2);
+  doc.text(String(noneSteps.length), cols[2] + 10, y + 17.5);
+  setFont('normal', 7, COL.text2);
+  doc.text('Nao verificados', cols[2] + 10, y + 22);
+
+  y += 38;
+
+  // ── FOOTER on every page ──────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(...COL.accent);
+    doc.rect(0, H - 2, W, 2, 'F');
+    setFont('normal', 6, COL.text2);
+    doc.text('ARQ_COMP // Relatorio de Diagnostico Tecnico', ML, H - 6);
+    doc.text(`Pagina ${p} de ${totalPages}`, W - MR, H - 6, { align: 'right' });
+  }
+
+  // Save
+  const fname = `diagnostico_${(mainCause ? mainCause.data.name.replace(/\s+/g,'_') : 'relatorio')}_${now.toISOString().slice(0,10)}.pdf`;
+  doc.save(fname);
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+
+function diagReset() {
+  _diagLastResult = null;
+  _diagLastProblem = '';
+  document.getElementById('diag-problem-input').value = '';
+  document.getElementById('diag-char').textContent = '0';
+  document.getElementById('diag-result').classList.add('hidden');
+  document.getElementById('diag-result-inner').innerHTML = '';
+  document.querySelector('.diag-input-wrap').style.opacity = '1';
+  document.querySelector('.diag-input-wrap').scrollIntoView({ behavior: 'smooth' });
+}
