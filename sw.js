@@ -11,9 +11,9 @@ const DATA_CACHE = 'arq-comp-data-v1.0.0';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './styles.css',
-  './index.js',
-  './data.json',
+  './css/styles.css',
+  './js/index.js',
+  './database/data.json',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',

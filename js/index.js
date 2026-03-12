@@ -15,7 +15,7 @@ let simRunning = false;
 // ============================================================
 async function init() {
   try {
-    const res = await fetch('database/data.json');
+    const res = await fetch('./database/data.json');
     DATA_STORE = await res.json();
     applyLang(currentLang);
     initProtectionView();
