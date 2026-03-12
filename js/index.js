@@ -43,6 +43,9 @@ function setLang(lang) {
   if(activeVirus){ document.getElementById('virus-grid').innerHTML=''; initVirus(); }
   if(activeProtection){ initProtectionView(); }
   if(activeRelations){ document.getElementById('rel-table').innerHTML=''; initRelations(); }
+
+  const activeGlossary = document.getElementById('view-glossary').classList.contains('active');
+  if(activeGlossary){ renderGlossary(document.getElementById('glossary-search-input')?.value || ''); }
 }
 
 function applyLang(lang) {
@@ -124,6 +127,7 @@ function showView(name, el) {
   if(name === 'protection') initProtectionView();
   if(name === 'relations') initRelations();
   if(name === 'diag') initDiag();
+  if(name === 'glossary') initGlossary();
 }
 
 // ============================================================
@@ -1555,3 +1559,4 @@ function diagReset() {
   document.querySelector('.diag-input-wrap').style.opacity = '1';
   document.querySelector('.diag-input-wrap').scrollIntoView({ behavior: 'smooth' });
 }
+

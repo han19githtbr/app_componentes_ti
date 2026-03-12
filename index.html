@@ -66,6 +66,7 @@
   <button class="tab" data-tab="protection" onclick="showView('protection', this)">🛡️ Proteção contra Vírus</button>
   <button class="tab" data-tab="relations" onclick="showView('relations', this)">🔗 Matriz de Relações</button>
   <button class="tab" data-tab="diag" onclick="showView('diag', this)">🩺 Diagnóstico</button>
+  <button class="tab" data-tab="glossary" onclick="showView('glossary', this)">📖 Glossário</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -96,7 +97,7 @@
           <div class="sublabel" id="cat-sub-hw">componentes físicos</div>
         </div>
         <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
-        <div class="sub-branches" style="max-width:200px;">
+        <div class="sub-branches" style="max-width:200px; margin-bottom:16px;">
           <div class="leaf" onclick="openPanel('cpu')">⚙️ CPU</div>
           <div class="leaf" onclick="openPanel('gpu')">🎮 GPU</div>
           <div class="leaf" onclick="openPanel('ram')">💾 RAM</div>
@@ -117,7 +118,7 @@
           <div class="sublabel" id="cat-sub-bios">firmware</div>
         </div>
         <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
-        <div class="sub-branches" style="max-width:180px;">
+        <div class="sub-branches" style="max-width:180px; margin-bottom:16px;">
           <div class="leaf" onclick="openPanel('post')">🟢 POST</div>
           <div class="leaf" onclick="openPanel('cmos')">🔋 CMOS</div>
           <div class="leaf" onclick="openPanel('boot_seq')">🚀 Boot Seq.</div>
@@ -134,7 +135,7 @@
           <div class="sublabel" id="cat-sub-os">kernel & processos</div>
         </div>
         <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
-        <div class="sub-branches" style="max-width:220px;">
+        <div class="sub-branches" style="max-width:220px; margin-bottom:16px;">
           <div class="leaf" onclick="openPanel('windows')">🪟 Windows</div>
           <div class="leaf" onclick="openPanel('linux')">🐧 Linux</div>
           <div class="leaf" onclick="openPanel('macos')">🍎 macOS</div>
@@ -153,7 +154,7 @@
           <div class="sublabel" id="cat-sub-net">protocolos</div>
         </div>
         <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
-        <div class="sub-branches" style="max-width:200px;">
+        <div class="sub-branches" style="max-width:200px; margin-bottom:16px;">
           <div class="leaf" onclick="openPanel('tcpip')">📡 TCP/IP</div>
           <div class="leaf" onclick="openPanel('dns')">🔍 DNS</div>
           <div class="leaf" onclick="openPanel('dhcp')">📋 DHCP</div>
@@ -172,7 +173,7 @@
           <div class="sublabel" id="cat-sub-virus">segurança</div>
         </div>
         <div style="width:2px;height:20px;background:var(--border2);margin:4px auto;"></div>
-        <div class="sub-branches" style="max-width:220px;">
+        <div class="sub-branches" style="max-width:220px; margin-bottom:16px;">
           <div class="leaf" onclick="openPanel('virus_cls')">🧬 Vírus</div>
           <div class="leaf" onclick="openPanel('malware')">☠️ Malware</div>
           <div class="leaf" onclick="openPanel('ransomware')">🔐 Ransomware</div>
@@ -352,6 +353,30 @@
 </div><!-- end view-diag -->
 
 <!-- ============================================================ -->
+<!-- VIEW 7: GLOSSÁRIO DE SIGLAS                               -->
+<!-- ============================================================ -->
+<div class="view" id="view-glossary">
+  <div class="glossary-container">
+    <div class="section-hdr" id="glossary-main-title">// glossário de siglas e termos técnicos</div>
+
+    <div class="glossary-search-wrap">
+      <div class="glossary-search-icon">🔍</div>
+      <input
+        type="text"
+        id="glossary-search-input"
+        class="glossary-search-input"
+        placeholder="Buscar sigla ou termo... ex: NVMe, TCP, BIOS"
+        oninput="glossarySearch()"
+        onkeydown="glossarySearchKey(event)"
+      />
+      <button class="glossary-search-clear" onclick="document.getElementById('glossary-search-input').value='';renderGlossary('');">✕</button>
+    </div>
+
+    <div id="glossary-content"></div>
+  </div>
+</div><!-- end view-glossary -->
+
+<!-- ============================================================ -->
 <!-- REPAIR PANEL OVERLAY                                        -->
 <!-- ============================================================ -->
 <div id="repair-panel" class="repair-panel">
@@ -366,6 +391,7 @@
 <div id="repair-backdrop" class="repair-backdrop" onclick="closeRepairPanel()"></div>
 
 <script src="js/index.js"></script>
+<script src="js/glossary.js"></script>
 
 <!-- ===== PWA INSTALL BANNER ===== -->
 <div id="pwa-banner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f1823;border:1px solid #00d4ff44;border-radius:12px;padding:14px 20px;align-items:center;gap:14px;z-index:9999;box-shadow:0 8px 40px rgba(0,212,255,0.15);max-width:420px;width:calc(100% - 40px);animation:slide-up 0.4s ease;">
@@ -434,7 +460,7 @@
   }
 
   const hash = window.location.hash.replace('#','');
-  if(['tree','sim','virus','protection','relations','diag'].includes(hash)){
+  if(['tree','sim','virus','protection','relations','diag','glossary'].includes(hash)){
     window.addEventListener('DOMContentLoaded', () => {
       const tab = document.querySelector('[data-tab="'+hash+'"]');
       if(tab) tab.click();
