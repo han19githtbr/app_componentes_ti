@@ -924,6 +924,17 @@ table.rel-table td.row-header{
   .branch::before{display:none;}
   .cat-node{margin-top:0;}
   .specs-grid{grid-template-columns:1fr;}
+  
+}
+
+@media(max-width:480px){
+  
+  .diag-step-status-wrapper{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
 }
 
 /* ===== REPAIR PANEL OVERLAY ===== */
@@ -1450,7 +1461,8 @@ table.rel-table td.row-header{
 /* ── Step checkboxes & status ─────────────────────────────── */
 .diag-step-status-wrap {
   display: flex;
-  gap: 8px;
+  margin: 6px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
