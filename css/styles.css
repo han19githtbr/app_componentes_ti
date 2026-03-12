@@ -1462,7 +1462,7 @@ table.rel-table td.row-header{
 .diag-step-status-wrap {
   display: block;
   margin: 6px;
-  gap: 6px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
