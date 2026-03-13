@@ -29,6 +29,7 @@
 <title>Arquitetura de Computadores — Mapa Interativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/cache_livesim.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
@@ -61,7 +62,9 @@
 <!-- ===== TABS ===== -->
 <nav class="tabs">
   <button class="tab active" data-tab="tree" onclick="showView('tree', this)">🌳 Mapa Geral</button>
-  <button class="tab" data-tab="sim" onclick="showView('sim', this)">⚡ Simulação de Falha</button>
+  <button class="tab" data-tab="cache" onclick="showView('cache', this)">⚡ Memória Cache</button>
+  <button class="tab" data-tab="livesim" onclick="showView('livesim', this)">🔴 Simulador ao Vivo</button>
+  <button class="tab" data-tab="sim" onclick="showView('sim', this)">💥 Simulação de Falha</button>
   <button class="tab" data-tab="virus" onclick="showView('virus', this)">🦠 Tipos de Vírus</button>
   <button class="tab" data-tab="protection" onclick="showView('protection', this)">🛡️ Proteção contra Vírus</button>
   <button class="tab" data-tab="relations" onclick="showView('relations', this)">🔗 Matriz de Relações</button>
@@ -377,6 +380,382 @@
 </div><!-- end view-glossary -->
 
 <!-- ============================================================ -->
+<!-- VIEW: MEMÓRIA CACHE                                          -->
+<!-- ============================================================ -->
+<div class="view" id="view-cache">
+  <div class="cache-container">
+    <div class="section-hdr">// memória cache — hierarquia e funcionamento interno</div>
+
+    <!-- Hero intro -->
+    <div class="cache-hero">
+      <div class="cache-hero-left">
+        <div class="cache-hero-tag">CONCEITO FUNDAMENTAL</div>
+        <h2 class="cache-hero-title">O que é Memória Cache?</h2>
+        <p class="cache-hero-desc">A memória cache é uma memória de acesso ultra-rápido posicionada entre o processador (CPU) e a memória RAM. Seu objetivo é reduzir a latência de acesso a dados frequentemente usados, evitando que a CPU fique parada esperando a RAM — que é muito mais lenta. Sem cache, um processador moderno ficaria ocioso até 80% do tempo aguardando dados.</p>
+      </div>
+      <div class="cache-hero-right">
+        <div class="cache-speed-pyramid">
+          <div class="pyr-layer pyr-reg">Registradores<span>~0.3 ns · bytes</span></div>
+          <div class="pyr-layer pyr-l1">L1 Cache<span>~1 ns · 32–128 KB</span></div>
+          <div class="pyr-layer pyr-l2">L2 Cache<span>~4 ns · 256 KB–4 MB</span></div>
+          <div class="pyr-layer pyr-l3">L3 Cache<span>~10–30 ns · 8–64 MB</span></div>
+          <div class="pyr-layer pyr-ram">RAM (DRAM)<span>~60–100 ns · GBs</span></div>
+          <div class="pyr-layer pyr-disk">SSD / NVMe<span>~100 µs · TBs</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache levels grid -->
+    <div class="cache-levels-title">// níveis de cache</div>
+    <div class="cache-levels-grid">
+      <div class="cache-level-card" style="--clr:#ff6b35">
+        <div class="clc-badge">L1</div>
+        <div class="clc-name">Cache L1</div>
+        <div class="clc-sub">Nível 1 — O mais rápido</div>
+        <div class="clc-desc">Integrado diretamente no núcleo do processador. Dividido em L1-I (instruções) e L1-D (dados). Latência de 4 ciclos de clock. Cada núcleo tem o seu próprio L1.</div>
+        <div class="clc-stats">
+          <div class="clc-stat"><span>Tamanho</span><strong>32–128 KB</strong></div>
+          <div class="clc-stat"><span>Latência</span><strong>~1 ns</strong></div>
+          <div class="clc-stat"><span>Velocidade</span><strong>~3–4 TB/s</strong></div>
+          <div class="clc-stat"><span>Localização</span><strong>No núcleo</strong></div>
+        </div>
+      </div>
+      <div class="cache-level-card" style="--clr:#f59e0b">
+        <div class="clc-badge">L2</div>
+        <div class="clc-name">Cache L2</div>
+        <div class="clc-sub">Nível 2 — Buffer intermediário</div>
+        <div class="clc-desc">Também por núcleo na maioria das CPUs modernas. Serve como buffer entre L1 e L3. Armazena dados que não couberam no L1. Latência entre 4 e 12 ciclos.</div>
+        <div class="clc-stats">
+          <div class="clc-stat"><span>Tamanho</span><strong>256 KB–4 MB</strong></div>
+          <div class="clc-stat"><span>Latência</span><strong>~4 ns</strong></div>
+          <div class="clc-stat"><span>Velocidade</span><strong>~1 TB/s</strong></div>
+          <div class="clc-stat"><span>Localização</span><strong>No chip</strong></div>
+        </div>
+      </div>
+      <div class="cache-level-card" style="--clr:#22c55e">
+        <div class="clc-badge">L3</div>
+        <div class="clc-name">Cache L3</div>
+        <div class="clc-sub">Nível 3 — Compartilhado</div>
+        <div class="clc-desc">Compartilhado entre todos os núcleos da CPU. Permite que núcleos troquem dados sem ir à RAM. Encontrado em todos os processadores de desktop modernos. Chamado de LLC (Last Level Cache).</div>
+        <div class="clc-stats">
+          <div class="clc-stat"><span>Tamanho</span><strong>8–64 MB</strong></div>
+          <div class="clc-stat"><span>Latência</span><strong>~10–30 ns</strong></div>
+          <div class="clc-stat"><span>Velocidade</span><strong>~300 GB/s</strong></div>
+          <div class="clc-stat"><span>Localização</span><strong>No die</strong></div>
+        </div>
+      </div>
+      <div class="cache-level-card" style="--clr:#3b82f6">
+        <div class="clc-badge">L4</div>
+        <div class="clc-name">Cache L4 / eDRAM</div>
+        <div class="clc-sub">Nível 4 — Opcional</div>
+        <div class="clc-desc">Presente em CPUs Intel com Iris Pro e alguns Xeon. Usa DRAM embarcado (eDRAM) como cache entre L3 e RAM. Também utilizado em alguns processadores ARM de alto desempenho.</div>
+        <div class="clc-stats">
+          <div class="clc-stat"><span>Tamanho</span><strong>64–256 MB</strong></div>
+          <div class="clc-stat"><span>Latência</span><strong>~30–50 ns</strong></div>
+          <div class="clc-stat"><span>Velocidade</span><strong>~100 GB/s</strong></div>
+          <div class="clc-stat"><span>Localização</span><strong>Fora do die</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="cache-section">
+      <div class="cache-section-header">
+        <div class="cache-section-icon">⚙️</div>
+        <div>
+          <div class="cache-section-title">Como a Cache Funciona: Hit & Miss</div>
+          <div class="cache-section-sub">O ciclo de busca de dados do processador</div>
+        </div>
+      </div>
+      <div class="cache-flow">
+        <div class="cf-step cf-cpu">
+          <div class="cf-icon">⚙️</div>
+          <div class="cf-label">CPU precisa de dados</div>
+        </div>
+        <div class="cf-arrow">→</div>
+        <div class="cf-step cf-l1">
+          <div class="cf-icon">⚡</div>
+          <div class="cf-label">Verifica L1</div>
+        </div>
+        <div class="cf-branch">
+          <div class="cf-hit">✅ HIT<span>Dados retornam em ~1ns</span></div>
+          <div class="cf-miss">❌ MISS<span>Busca no L2...</span></div>
+        </div>
+        <div class="cf-step cf-l2">
+          <div class="cf-icon">🔶</div>
+          <div class="cf-label">Verifica L2</div>
+        </div>
+        <div class="cf-branch">
+          <div class="cf-hit">✅ HIT<span>Dados retornam em ~4ns</span></div>
+          <div class="cf-miss">❌ MISS<span>Busca no L3...</span></div>
+        </div>
+        <div class="cf-step cf-l3">
+          <div class="cf-icon">🟢</div>
+          <div class="cf-label">Verifica L3</div>
+        </div>
+        <div class="cf-branch">
+          <div class="cf-hit">✅ HIT<span>Dados retornam em ~20ns</span></div>
+          <div class="cf-miss">❌ MISS<span>Busca na RAM...</span></div>
+        </div>
+        <div class="cf-step cf-ram">
+          <div class="cf-icon">💾</div>
+          <div class="cf-label">RAM (lenta)</div>
+          <div class="cf-penalty">⚠ Penalidade: ~100ns</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache policies -->
+    <div class="cache-section">
+      <div class="cache-section-header">
+        <div class="cache-section-icon">📋</div>
+        <div>
+          <div class="cache-section-title">Políticas de Cache</div>
+          <div class="cache-section-sub">Como a cache decide o que guardar e descartar</div>
+        </div>
+      </div>
+      <div class="cache-policies-grid">
+        <div class="policy-card">
+          <div class="policy-name">🔄 Write-Through</div>
+          <div class="policy-desc">Toda escrita vai simultaneamente para cache e RAM. Garante consistência, mas é mais lento nas escritas. Usado em caches L1 de algumas arquiteturas.</div>
+          <div class="policy-tag tag-safe">Mais seguro</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-name">⚡ Write-Back</div>
+          <div class="policy-desc">Dados são escritos primeiro na cache e copiados para RAM somente quando a linha é descartada. Muito mais rápido — usado em L1/L2 modernas.</div>
+          <div class="policy-tag tag-fast">Mais rápido</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-name">🗑️ LRU (Least Recently Used)</div>
+          <div class="policy-desc">O dado menos recentemente usado é o primeiro a ser substituído quando a cache está cheia. O algoritmo de eviction mais comum em caches L1/L2/L3.</div>
+          <div class="policy-tag tag-common">Mais comum</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-name">🎯 Prefetching</div>
+          <div class="policy-desc">A CPU prevê quais dados serão necessários e os carrega na cache antes do pedido explícito. Reduz cache misses em padrões de acesso sequencial.</div>
+          <div class="policy-tag tag-smart">Preditivo</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-name">🔗 Associatividade</div>
+          <div class="policy-desc">Define quantos locais na cache um dado pode ocupar. Caches direct-mapped são simples mas com mais conflito; N-way set-associative é o padrão moderno.</div>
+          <div class="policy-tag tag-arch">Arquitetural</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-name">🧹 Cache Flush</div>
+          <div class="policy-desc">Operação que força o esvaziamento da cache, escrevendo os dados sujos de volta à RAM e invalidando todas as linhas. Ocorre em context switch, mudança de processo crítico e reinicialização.</div>
+          <div class="policy-tag tag-sys">Sistema</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive simulator -->
+    <div class="cache-section">
+      <div class="cache-section-header">
+        <div class="cache-section-icon">🎮</div>
+        <div>
+          <div class="cache-section-title">Simulador de Cache — Visualize em Tempo Real</div>
+          <div class="cache-section-sub">Veja o que acontece quando a CPU busca dados na hierarquia de memória</div>
+        </div>
+      </div>
+      <div class="cache-sim-area">
+        <div class="cache-sim-controls">
+          <button class="csim-btn" onclick="cacheSimStep()">▶ Simular Busca de Dado</button>
+          <button class="csim-btn csim-miss" onclick="cacheSimForceMiss()">💥 Forçar Cache Miss</button>
+          <button class="csim-btn csim-reset" onclick="cacheSimReset()">↺ Resetar</button>
+          <div class="csim-stats">
+            <span>HITs: <strong id="csim-hits" style="color:#22c55e">0</strong></span>
+            <span>MISSes: <strong id="csim-misses" style="color:#ef4444">0</strong></span>
+            <span>Taxa: <strong id="csim-rate" style="color:#00d4ff">—</strong></span>
+          </div>
+        </div>
+        <div class="cache-sim-visual" id="cache-sim-visual">
+          <div class="csim-cpu-block">
+            <div class="csim-unit csim-cpu" id="csim-cpu">
+              <div class="csim-unit-icon">⚙️</div>
+              <div class="csim-unit-label">CPU</div>
+              <div class="csim-unit-req" id="csim-req">esperando...</div>
+            </div>
+          </div>
+          <div class="csim-hierarchy">
+            <div class="csim-mem-row">
+              <div class="csim-mem csim-l1" id="csim-l1">
+                <div class="csim-mem-header"><span class="csim-mem-badge l1-badge">L1</span><span>Cache L1</span><span class="csim-mem-size">64 KB</span></div>
+                <div class="csim-cache-lines" id="csim-l1-lines"></div>
+              </div>
+            </div>
+            <div class="csim-mem-row">
+              <div class="csim-mem csim-l2" id="csim-l2">
+                <div class="csim-mem-header"><span class="csim-mem-badge l2-badge">L2</span><span>Cache L2</span><span class="csim-mem-size">512 KB</span></div>
+                <div class="csim-cache-lines" id="csim-l2-lines"></div>
+              </div>
+            </div>
+            <div class="csim-mem-row">
+              <div class="csim-mem csim-l3" id="csim-l3">
+                <div class="csim-mem-header"><span class="csim-mem-badge l3-badge">L3</span><span>Cache L3</span><span class="csim-mem-size">16 MB</span></div>
+                <div class="csim-cache-lines" id="csim-l3-lines"></div>
+              </div>
+            </div>
+            <div class="csim-mem-row">
+              <div class="csim-mem csim-ram-mem" id="csim-ram">
+                <div class="csim-mem-header"><span class="csim-mem-badge ram-badge">RAM</span><span>Memória RAM</span><span class="csim-mem-size">16 GB</span></div>
+                <div class="csim-ram-blocks" id="csim-ram-blocks"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="csim-log" id="csim-log">
+          <div class="csim-log-entry csim-info">// simulador pronto — clique em "Simular Busca de Dado"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real impact section -->
+    <div class="cache-impact">
+      <div class="cache-impact-title">⚡ Impacto Real da Cache no Desempenho</div>
+      <div class="cache-impact-grid">
+        <div class="impact-item">
+          <div class="impact-num" style="color:#ff6b35">200×</div>
+          <div class="impact-label">L1 é ~200x mais rápida que a RAM</div>
+        </div>
+        <div class="impact-item">
+          <div class="impact-num" style="color:#f59e0b">95%</div>
+          <div class="impact-label">Taxa de hit típica em aplicações bem otimizadas</div>
+        </div>
+        <div class="impact-item">
+          <div class="impact-num" style="color:#22c55e">10ns</div>
+          <div class="impact-label">Penalidade de miss no L3 vs 100ns na RAM</div>
+        </div>
+        <div class="impact-item">
+          <div class="impact-num" style="color:#3b82f6">80%</div>
+          <div class="impact-label">CPU ficaria ociosa sem cache aguardando RAM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VIEW: SIMULADOR AO VIVO                                      -->
+<!-- ============================================================ -->
+<div class="view" id="view-livesim">
+  <div class="livesim-container">
+    <div class="section-hdr">// simulador ao vivo — comunicação entre componentes em tempo real</div>
+
+    <div class="livesim-header-info">
+      <div class="livesim-info-icon">🔴</div>
+      <div>
+        <div class="livesim-info-title">Simulador de Arquitetura em Tempo Real</div>
+        <div class="livesim-info-sub">Observe como os componentes se comunicam entre si. Clique em qualquer componente para simular uma falha e veja o impacto em cascata no sistema.</div>
+      </div>
+      <div class="livesim-controls">
+        <button class="lsim-btn lsim-start" id="lsim-start-btn" onclick="livesimToggle()">▶ Iniciar</button>
+        <button class="lsim-btn lsim-reset" onclick="livesimReset()">↺ Resetar</button>
+        <div class="lsim-speed">
+          <span>Velocidade:</span>
+          <select id="lsim-speed-sel" onchange="livesimSetSpeed(this.value)">
+            <option value="8000">Muito lenta</option>
+            <option value="2000">Lenta</option>
+            <option value="1000" selected>Normal</option>
+            <option value="400">Rápida</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main simulation canvas -->
+    <div class="livesim-canvas" id="livesim-canvas">
+      <!-- SVG for connection lines -->
+      <svg id="lsim-svg" class="lsim-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <!-- Components -->
+      <div class="lsim-comp lsim-cpu" id="lsim-cpu" onclick="livesimFailComp('cpu')" title="Clique para simular falha">
+        <div class="lsim-comp-icon">⚙️</div>
+        <div class="lsim-comp-name">CPU</div>
+        <div class="lsim-comp-sub">Intel i9 / AMD Ryzen</div>
+        <div class="lsim-status-dot" id="ldot-cpu"></div>
+        <div class="lsim-comp-metric" id="lmet-cpu">Uso: 34%</div>
+      </div>
+
+      <div class="lsim-comp lsim-cache" id="lsim-cache" onclick="livesimFailComp('cache')" title="Clique para simular falha">
+        <div class="lsim-comp-icon">⚡</div>
+        <div class="lsim-comp-name">Cache L1/L2/L3</div>
+        <div class="lsim-comp-sub">SRAM on-die</div>
+        <div class="lsim-status-dot" id="ldot-cache"></div>
+        <div class="lsim-comp-metric" id="lmet-cache">Hit: 94%</div>
+      </div>
+
+      <div class="lsim-comp lsim-ram" id="lsim-ram" onclick="livesimFailComp('ram')" title="Clique para simular falha">
+        <div class="lsim-comp-icon">💾</div>
+        <div class="lsim-comp-name">RAM</div>
+        <div class="lsim-comp-sub">DDR5 · 32 GB</div>
+        <div class="lsim-status-dot" id="ldot-ram"></div>
+        <div class="lsim-comp-metric" id="lmet-ram">Uso: 42%</div>
+      </div>
+
+      <div class="lsim-comp lsim-mobo" id="lsim-mobo" onclick="livesimFailComp('mobo')" title="Clique para simular falha">
+        <div class="lsim-comp-icon">🟫</div>
+        <div class="lsim-comp-name">Placa-Mãe</div>
+        <div class="lsim-comp-sub">Barramento + Chipset</div>
+        <div class="lsim-status-dot" id="ldot-mobo"></div>
+        <div class="lsim-comp-metric" id="lmet-mobo">PCIe · DMI</div>
+      </div>
+
+      <div class="lsim-comp lsim-gpu" id="lsim-gpu" onclick="livesimFailComp('gpu')" title="Clique para simular falha">
+        <div class="lsim-comp-icon">🎮</div>
+        <div class="lsim-comp-name">GPU</div>
+        <div class="lsim-comp-sub">VRAM · CUDA/ROCm</div>
+        <div class="lsim-status-dot" id="ldot-gpu"></div>
+        <div class="lsim-comp-metric" id="lmet-gpu">Uso: 67%</div>
+      </div>
+
+      <div class="lsim-comp lsim-storage" id="lsim-storage" onclick="livesimFailComp('storage')" title="Clique para simular falha">
+        <div class="lsim-comp-icon">💿</div>
+        <div class="lsim-comp-name">Armazenamento</div>
+        <div class="lsim-comp-sub">NVMe SSD</div>
+        <div class="lsim-status-dot" id="ldot-storage"></div>
+        <div class="lsim-comp-metric" id="lmet-storage">Leitura: 3.5 GB/s</div>
+      </div>
+
+      <div class="lsim-comp lsim-psu" id="lsim-psu" onclick="livesimFailComp('psu')" title="Clique para simular falha">
+        <div class="lsim-comp-icon">🔌</div>
+        <div class="lsim-comp-name">Fonte (PSU)</div>
+        <div class="lsim-comp-sub">650W 80+ Gold</div>
+        <div class="lsim-status-dot" id="ldot-psu"></div>
+        <div class="lsim-comp-metric" id="lmet-psu">Carga: 58%</div>
+      </div>
+
+      <div class="lsim-comp lsim-nic" id="lsim-nic" onclick="livesimFailComp('nic')" title="Clique para simular falha">
+        <div class="lsim-comp-icon">📡</div>
+        <div class="lsim-comp-name">Placa de Rede</div>
+        <div class="lsim-comp-sub">Ethernet / Wi-Fi</div>
+        <div class="lsim-status-dot" id="ldot-nic"></div>
+        <div class="lsim-comp-metric" id="lmet-nic">↑↓ 450 Mbps</div>
+      </div>
+
+      <!-- Packet animations container -->
+      <div id="lsim-packets"></div>
+    </div>
+
+    <!-- Event log -->
+    <div class="livesim-bottom">
+      <div class="lsim-log-panel">
+        <div class="lsim-log-header">
+          <span>📋 Log de Comunicação em Tempo Real</span>
+          <button onclick="document.getElementById('lsim-log-entries').innerHTML=''" style="background:none;border:1px solid var(--border);color:var(--text3);font-size:0.6rem;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:var(--font-mono);">limpar</button>
+        </div>
+        <div id="lsim-log-entries" class="lsim-log-entries">
+          <div class="lsim-log-line lsim-log-info">// aguardando início da simulação...</div>
+        </div>
+      </div>
+      <div class="lsim-fail-panel">
+        <div class="lsim-fail-header">⚠ Impactos de Falha</div>
+        <div id="lsim-fail-desc" class="lsim-fail-desc">Clique em qualquer componente no diagrama para simular sua falha e ver o impacto em cascata no sistema.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
 <!-- REPAIR PANEL OVERLAY                                        -->
 <!-- ============================================================ -->
 <div id="repair-panel" class="repair-panel">
@@ -392,6 +771,7 @@
 
 <script src="js/index.js"></script>
 <script src="js/glossary.js"></script>
+<script src="js/livesim.js"></script>
 
 <!-- ===== PWA INSTALL BANNER ===== -->
 <div id="pwa-banner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f1823;border:1px solid #00d4ff44;border-radius:12px;padding:14px 20px;align-items:center;gap:14px;z-index:9999;box-shadow:0 8px 40px rgba(0,212,255,0.15);max-width:420px;width:calc(100% - 40px);animation:slide-up 0.4s ease;">
@@ -460,7 +840,7 @@
   }
 
   const hash = window.location.hash.replace('#','');
-  if(['tree','sim','virus','protection','relations','diag','glossary'].includes(hash)){
+  if(['tree','sim','cache','livesim','virus','protection','relations','diag','glossary'].includes(hash)){
     window.addEventListener('DOMContentLoaded', () => {
       const tab = document.querySelector('[data-tab="'+hash+'"]');
       if(tab) tab.click();

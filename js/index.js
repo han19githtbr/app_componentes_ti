@@ -123,6 +123,8 @@ function showView(name, el) {
   if(el) el.classList.add('active');
 
   if(name === 'sim') initSim();
+  if(name === 'cache') initCacheView();
+  if(name === 'livesim') initLiveSim();
   if(name === 'virus') initVirus();
   if(name === 'protection') initProtectionView();
   if(name === 'relations') initRelations();
