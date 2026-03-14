@@ -46,6 +46,12 @@ function setLang(lang) {
 
   const activeGlossary = document.getElementById('view-glossary').classList.contains('active');
   if(activeGlossary){ renderGlossary(document.getElementById('glossary-search-input')?.value || ''); }
+
+  // Re-render diag result if visible (re-uses T() so just re-render)
+  const activeDiag = document.getElementById('view-diag').classList.contains('active');
+  if(activeDiag && _diagLastResult && !_diagLastResult.noMatch) {
+    diagRenderResult(_diagLastResult, _diagLastProblem);
+  }
 }
 
 function applyLang(lang) {
@@ -106,6 +112,146 @@ function applyLang(lang) {
   if(pt) pt.textContent = t.protectionTitle;
   const ps = document.getElementById('prot-main-sub');
   if(ps) ps.textContent = t.protectionSub;
+
+  // ── CACHE VIEW ──────────────────────────────────────────────
+  function setText(id, key) { const el = document.getElementById(id); if(el && t[key] !== undefined) el.textContent = t[key]; }
+  setText('cache-view-header',    'cacheViewHeader');
+  setText('cache-hero-tag',       'cacheHeroTag');
+  setText('cache-hero-title',     'cacheHeroTitle');
+  setText('cache-hero-desc',      'cacheHeroDesc');
+  setText('cache-levels-title',   'cacheLevelsTitle');
+  setText('cache-l1-name',        'cacheL1Name');
+  setText('cache-l1-sub',         'cacheL1Sub');
+  setText('cache-l1-desc',        'cacheL1Desc');
+  setText('cache-l2-name',        'cacheL2Name');
+  setText('cache-l2-sub',         'cacheL2Sub');
+  setText('cache-l2-desc',        'cacheL2Desc');
+  setText('cache-l3-name',        'cacheL3Name');
+  setText('cache-l3-sub',         'cacheL3Sub');
+  setText('cache-l3-desc',        'cacheL3Desc');
+  setText('cache-l4-name',        'cacheL4Name');
+  setText('cache-l4-sub',         'cacheL4Sub');
+  setText('cache-l4-desc',        'cacheL4Desc');
+  // stat labels (repeated for each level)
+  ['1','2','3','4'].forEach(n => {
+    setText('cache-stat-size-'+n,  'cacheStatSize');
+    setText('cache-stat-lat-'+n,   'cacheStatLatency');
+    setText('cache-stat-spd-'+n,   'cacheStatSpeed');
+    setText('cache-stat-loc-'+n,   'cacheStatLocation');
+  });
+  setText('cache-l1-loc',         'cacheL1Location');
+  setText('cache-l2-loc',         'cacheL2Location');
+  setText('cache-l3-loc',         'cacheL3Location');
+  setText('cache-l4-loc',         'cacheL4Location');
+  // Hit/Miss flow
+  setText('cache-hitmiss-title',  'cacheHitMissTitle');
+  setText('cache-hitmiss-sub',    'cacheHitMissSub');
+  setText('cache-cpu-need',       'cacheCpuNeed');
+  setText('cache-check-l1',       'cacheCheckL1');
+  setText('cache-check-l2',       'cacheCheckL2');
+  setText('cache-check-l3',       'cacheCheckL3');
+  setText('cache-ram-slow',       'cacheRamSlow');
+  setText('cache-hit-l1',         'cacheHitL1');
+  setText('cache-hit-l2',         'cacheHitL2');
+  setText('cache-hit-l3',         'cacheHitL3');
+  setText('cache-miss-l1',        'cacheMissL1');
+  setText('cache-miss-l2',        'cacheMissL2');
+  setText('cache-miss-l3',        'cacheMissL3');
+  setText('cache-ram-penalty',    'cacheRamPenalty');
+  // Policies
+  setText('cache-policies-title', 'cachePoliciesTitle');
+  setText('cache-policies-sub',   'cachePoliciesSub');
+  setText('cache-wt-name',        'cacheWTName');
+  setText('cache-wt-desc',        'cacheWTDesc');
+  setText('cache-wt-tag',         'cacheWTTag');
+  setText('cache-wb-name',        'cacheWBName');
+  setText('cache-wb-desc',        'cacheWBDesc');
+  setText('cache-wb-tag',         'cacheWBTag');
+  setText('cache-lru-name',       'cacheLRUName');
+  setText('cache-lru-desc',       'cacheLRUDesc');
+  setText('cache-lru-tag',        'cacheLRUTag');
+  setText('cache-pf-name',        'cachePFName');
+  setText('cache-pf-desc',        'cachePFDesc');
+  setText('cache-pf-tag',         'cachePFTag');
+  setText('cache-assoc-name',     'cacheAssocName');
+  setText('cache-assoc-desc',     'cacheAssocDesc');
+  setText('cache-assoc-tag',      'cacheAssocTag');
+  setText('cache-flush-name',     'cacheFlushName');
+  setText('cache-flush-desc',     'cacheFlushDesc');
+  setText('cache-flush-tag',      'cacheFlushTag');
+  // Simulator
+  setText('cache-sim-title',      'cacheSimTitle');
+  setText('cache-sim-sub',        'cacheSimSub');
+  setText('cache-sim-btn-step',   'cacheSimBtnStep');
+  setText('cache-sim-btn-miss',   'cacheSimBtnMiss');
+  setText('cache-sim-btn-reset',  'cacheSimBtnReset');
+  setText('csim-log-ready',       'cacheSimReady');
+  // Update the waiting text in the CPU req display only if still default
+  const reqEl = document.getElementById('csim-req');
+  if(reqEl && t.cacheSimWait) reqEl.textContent = t.cacheSimWait;
+  // Impact
+  setText('cache-impact-title',   'cacheImpactTitle');
+  setText('cache-impact-200x',    'cacheImpact200x');
+  setText('cache-impact-95',      'cacheImpact95');
+  setText('cache-impact-10ns',    'cacheImpact10ns');
+  setText('cache-impact-80',      'cacheImpact80');
+
+  // ── LIVESIM VIEW ─────────────────────────────────────────────
+  setText('livesim-view-header',  'livesimViewHeader');
+  setText('livesim-info-title',   'livesimInfoTitle');
+  setText('livesim-info-sub',     'livesimInfoSub');
+  setText('livesim-speed-label',  'livesimSpeed');
+  setText('lsim-opt-vslow',       'livesimSpeedVSlow');
+  setText('lsim-opt-slow',        'livesimSpeedSlow');
+  setText('lsim-opt-normal',      'livesimSpeedNormal');
+  setText('lsim-opt-fast',        'livesimSpeedFast');
+  setText('livesim-log-header',   'livesimLogHeader');
+  setText('livesim-log-clear',    'livesimLogClear');
+  setText('livesim-fail-header',  'livesimFailHeader');
+  // Start/reset buttons (keep dynamic state — only update if showing default label)
+  const startBtn = document.getElementById('lsim-start-btn');
+  if(startBtn && t.livesimBtnStart) {
+    // Only update if the button text matches any language's start text
+    const isStart = ['▶ Iniciar','▶ Start','▶ Démarrer'].includes(startBtn.textContent.trim());
+    if(isStart) startBtn.textContent = t.livesimBtnStart;
+  }
+  const resetBtn = document.getElementById('lsim-reset-btn');
+  if(resetBtn && t.livesimBtnReset) resetBtn.textContent = t.livesimBtnReset;
+  // Update default fail desc only if it still shows default text
+  const failDesc = document.getElementById('lsim-fail-desc');
+  if(failDesc && t.livesimFailDesc) {
+    const isDefault = ['Clique em qualquer componente no diagrama para simular sua falha e ver o impacto em cascata no sistema.',
+      'Click any component in the diagram to simulate its failure and see the cascading impact on the system.',
+      'Cliquez sur n\'importe quel composant du diagramme pour simuler sa panne et voir l\'impact en cascade sur le système.'].includes(failDesc.textContent.trim());
+    if(isDefault) failDesc.textContent = t.livesimFailDesc;
+  }
+  // Update component click titles
+  document.querySelectorAll('[data-lsim-title="livesimClickHint"]').forEach(el => {
+    if(t.livesimClickHint) el.title = t.livesimClickHint;
+  });
+
+  // ── DIAGNOSTICS VIEW ─────────────────────────────────────────
+  setText('diag-view-header',     'diagViewHeader');
+  setText('diag-intro-title',     'diagIntroTitle');
+  setText('diag-intro-sub',       'diagIntroSub');
+  setText('diag-step-label',      'diagStepLabel');
+  setText('diag-examples-label',  'diagExamplesLabel');
+  setText('diag-loading-text',    'diagLoadingText');
+  setText('diag-btn-reset',       'diagBtnReset');
+  // Analyze button
+  const analyzeBtn = document.getElementById('diag-analyze-btn');
+  if(analyzeBtn && t.diagBtnAnalyze) analyzeBtn.textContent = t.diagBtnAnalyze;
+  // Textarea placeholder
+  const textarea = document.getElementById('diag-problem-input');
+  if(textarea && t.diagPlaceholder) textarea.placeholder = t.diagPlaceholder;
+  // Chip suggestions
+  if(t.diagChips) {
+    const grid = document.getElementById('diag-chips-grid');
+    if(grid) {
+      const chips = grid.querySelectorAll('.diag-chip');
+      t.diagChips.forEach((chip, i) => { if(chips[i]) chips[i].textContent = chip; });
+    }
+  }
 }
 
 function T(key) {
@@ -1019,15 +1165,23 @@ function findTopVirus(text, lang) {
 }
 
 const SEVERITY_STYLE = {
-  'baixo':   { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.25)',   label: '🟢 BAIXO' },
-  'médio':   { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)',  label: '🟡 MÉDIO' },
-  'alto':    { color: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.25)',  label: '🟠 ALTO' },
-  'crítico': { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)',   label: '🔴 CRÍTICO' },
+  'baixo':   { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.25)'  },
+  'médio':   { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)' },
+  'alto':    { color: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.25)' },
+  'crítico': { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)'  },
 };
+function getSevLabel(sev) {
+  const t = DATA_STORE && DATA_STORE.translations[currentLang];
+  return (t && t.diagSeverity && t.diagSeverity[sev]) || sev.toUpperCase();
+}
+function getLvlLabel(lvl) {
+  const t = DATA_STORE && DATA_STORE.translations[currentLang];
+  return (t && t.diagLevels && t.diagLevels[lvl]) || lvl;
+}
 const LEVEL_STYLE = {
-  easy:   { color: '#22c55e', bg: 'rgba(34,197,94,0.12)',   label: 'Fácil' },
-  medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  label: 'Moderado' },
-  hard:   { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   label: 'Avançado' },
+  easy:   { color: '#22c55e', bg: 'rgba(34,197,94,0.12)'  },
+  medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+  hard:   { color: '#ef4444', bg: 'rgba(239,68,68,0.12)'  },
 };
 
 // Store last diagnosis for PDF export
@@ -1044,8 +1198,8 @@ function diagRenderResult(result, problem) {
     container.innerHTML = `
       <div class="diag-nomatch">
         <div style="font-size:2rem;margin-bottom:12px;">🤔</div>
-        <div class="diag-nomatch-title">Problema não identificado na base de dados</div>
-        <div class="diag-nomatch-sub">Tente usar termos mais específicos como: <em>tela azul, superaquece, sem internet, não liga, vírus, lento</em>...</div>
+        <div class="diag-nomatch-title">${T('diagNoMatchTitle')}</div>
+        <div class="diag-nomatch-sub">${T('diagNoMatchSub')}</div>
       </div>`;
     return;
   }
@@ -1057,24 +1211,24 @@ function diagRenderResult(result, problem) {
 
   // ── Header ───────────────────────────────────────────────
   const mainCause = causes[0];
-  const title = mainCause ? `Diagnóstico: ${mainCause.data.name}` : 'Diagnóstico Concluído';
+  const title = mainCause ? `${T('diagResultTitle')} ${mainCause.data.name}` : T('diagResultDone');
   html += `
     <div class="diag-result-header" style="background:${sev.bg};border:1px solid ${sev.border};">
       <div class="diag-result-title">${title}</div>
       <div style="margin:6px 0;">
-        <span class="diag-sev-badge" style="background:${sev.bg};border:1px solid ${sev.border};color:${sev.color};">${sev.label}</span>
+        <span class="diag-sev-badge" style="background:${sev.bg};border:1px solid ${sev.border};color:${sev.color};">${getSevLabel(severity)}</span>
       </div>
       <div class="diag-result-summary">
         ${mainCause ? mainCause.data.desc.split('.')[0] + '.' : ''}
-        ${causes.length > 1 ? `Também verifique: ${causes.slice(1,3).map(c=>c.data.name).join(', ')}.` : ''}
+        ${causes.length > 1 ? `${T('diagAlsoCheck')} ${causes.slice(1,3).map(c=>c.data.name).join(', ')}.` : ''}
       </div>
-      ${matchedKeywords.length ? `<div class="diag-keywords">Palavras-chave detectadas: ${matchedKeywords.slice(0,6).map(k=>`<span class="diag-kw">${k}</span>`).join('')}</div>` : ''}
+      ${matchedKeywords.length ? `<div class="diag-keywords">${T('diagKeywords')} ${matchedKeywords.slice(0,6).map(k=>`<span class="diag-kw">${k}</span>`).join('')}</div>` : ''}
     </div>`;
 
   // ── Causas prováveis ─────────────────────────────────────
   const maxScore = causes[0] ? causes[0].score : 1;
   html += `<div class="diag-section">
-    <div class="diag-section-label">// causas prováveis</div>`;
+    <div class="diag-section-label">${T('diagCausesLabel')}</div>`;
   causes.forEach((c) => {
     const pct = Math.round((c.score / maxScore) * 100);
     const barColor = pct > 75 ? '#ef4444' : pct > 45 ? '#f59e0b' : '#22c55e';
@@ -1094,7 +1248,7 @@ function diagRenderResult(result, problem) {
         </div>
         ${impacts.length ? `<div class="diag-impacts">${impacts.map(im=>`<span class="diag-impact-item">⚠ ${im}</span>`).join('')}</div>` : ''}
         <button class="diag-see-more" onclick="event.stopPropagation(); openPanel('${c.comp}')">
-          Ver detalhes do componente →
+          ${T('diagSeeMore')}
         </button>
       </div>`;
   });
@@ -1103,7 +1257,7 @@ function diagRenderResult(result, problem) {
   // ── Passo a passo com checkboxes ─────────────────────────
   if (allSteps.length > 0) {
     html += `<div class="diag-section">
-      <div class="diag-section-label">// passo a passo — marque os passos conforme executa</div>`;
+      <div class="diag-section-label">${T('diagStepsLabel')}</div>`;
     allSteps.forEach((step, i) => {
       const lvl = LEVEL_STYLE[step.level] || LEVEL_STYLE.easy;
       html += `
@@ -1112,15 +1266,15 @@ function diagRenderResult(result, problem) {
             <div class="diag-step-num">${String(i+1).padStart(2,'0')}</div>
             <span class="diag-step-icon">${step.icon || '🔧'}</span>
             <div class="diag-step-title">${step.title}</div>
-            <span class="diag-diff-badge" style="background:${lvl.bg};color:${lvl.color};">${lvl.label}</span>
+            <span class="diag-diff-badge" style="background:${lvl.bg};color:${lvl.color};">${getLvlLabel(step.level)}</span>
             <div class="diag-step-status-wrap">
               <label class="diag-cb-label diag-cb-solved">
                 <input type="checkbox" class="diag-cb" data-step="${i}" data-status="solved" onchange="diagToggleStep(this)">
-                <span>✓ Resolvido</span>
+                <span>${T('diagCbSolved')}</span>
               </label>
               <label class="diag-cb-label diag-cb-pending">
                 <input type="checkbox" class="diag-cb" data-step="${i}" data-status="pending" onchange="diagToggleStep(this)">
-                <span>⏳ Pendente</span>
+                <span>${T('diagCbPending')}</span>
               </label>
             </div>
           </div>
@@ -1137,11 +1291,11 @@ function diagRenderResult(result, problem) {
     const vdesc = typeof v.desc === 'object' ? v.desc[lang] : v.desc;
     const defSteps = (v.protection && v.protection.defenseSteps && (v.protection.defenseSteps[lang] || v.protection.defenseSteps['pt'])) || [];
     html += `<div class="diag-section">
-      <div class="diag-section-label">// ameaça identificada — plano de defesa</div>
+      <div class="diag-section-label">${T('diagVirusLabel')}</div>
       <div class="diag-virus-card" style="border-color:${v.color}44;">
         <div class="diag-virus-name" style="color:${v.color}">${vname}</div>
         <div class="diag-virus-desc">${vdesc}</div>
-        ${defSteps.length ? `<div class="diag-section-label" style="margin-top:14px;">passos de defesa</div>
+        ${defSteps.length ? `<div class="diag-section-label" style="margin-top:14px;">${T('diagDefenseLabel')}</div>
         ${defSteps.map((s,i)=>`<div class="diag-defense-step"><span class="diag-def-num">${String(i+1).padStart(2,'0')}</span>${s}</div>`).join('')}` : ''}
         ${v.protection && v.protection.tools ? `<div class="diag-tools-row">${v.protection.tools.map(tool=>`<span class="diag-tool-tag">🛡️ ${tool}</span>`).join('')}</div>` : ''}
       </div>
@@ -1153,7 +1307,7 @@ function diagRenderResult(result, problem) {
   causes.forEach(c => { (c.data.relations || []).forEach(r => relComps.add(r)); });
   if (relComps.size > 0) {
     html += `<div class="diag-section">
-      <div class="diag-section-label">// componentes relacionados — clique para ver detalhes</div>
+      <div class="diag-section-label">${T('diagRelatedLabel')}</div>
       <div class="diag-related-row">`;
     [...relComps].slice(0, 8).forEach(cid => {
       const cd = DATA_STORE.components[cid];
@@ -1172,12 +1326,12 @@ function diagRenderResult(result, problem) {
       <div class="diag-pdf-info">
         <span style="font-size:1.1rem;">📄</span>
         <div>
-          <div class="diag-pdf-bar-title">Relatório de Diagnóstico</div>
-          <div class="diag-pdf-bar-sub">Marque os passos como Resolvido ou Pendente antes de emitir</div>
+          <div class="diag-pdf-bar-title">${T('diagPdfTitle')}</div>
+          <div class="diag-pdf-bar-sub">${T('diagPdfSub')}</div>
         </div>
       </div>
       <button class="diag-pdf-btn" onclick="diagExportPDF()">
-        ⬇ Emitir Relatório PDF
+        ${T('diagPdfBtn')}
       </button>
     </div>`;
 
@@ -1230,7 +1384,7 @@ function diagExportPDF() {
     'crítico': COL.red,
   };
   const lvlColor = { easy: COL.green, medium: COL.yellow, hard: COL.red };
-  const lvlLabel = { easy: 'Fácil', medium: 'Moderado', hard: 'Avançado' };
+  const lvlLabel = { easy: getLvlLabel('easy'), medium: getLvlLabel('medium'), hard: getLvlLabel('hard') };
 
   const lang = currentLang || 'pt';
   const { causes, allSteps, virusMatch, severity, matchedKeywords } = result;
@@ -1295,7 +1449,7 @@ function diagExportPDF() {
   // Right: date
   setFont('normal', 7, COL.text2);
   doc.text(dateStr, W - MR, y, { align: 'right' });
-  doc.text('Relatório de Diagnóstico', W - MR, y + 5, { align: 'right' });
+  doc.text(T('diagPdfTitle'), W - MR, y + 5, { align: 'right' });
 
   y = 26;
   doc.setDrawColor(...COL.border);
@@ -1312,7 +1466,7 @@ function diagExportPDF() {
 
   y += 8;
   setFont('bold', 14, COL.white);
-  doc.text(mainCause ? `Diagnostico: ${mainCause.data.name}` : 'Diagnostico Completo', ML, y);
+  doc.text(mainCause ? `${T('diagResultTitle')} ${mainCause.data.name}` : T('diagResultDone'), ML, y);
   y += 7;
 
   // Problem description box
@@ -1323,7 +1477,7 @@ function diagExportPDF() {
   const pbH = problemLines.length * 5 + 10;
   doc.roundedRect(ML, y, W - ML - MR, pbH, 2, 2, 'FD');
   setFont('normal', 7, COL.text2);
-  doc.text('Problema relatado:', ML + 4, y + 6);
+  doc.text(T('diagStepLabel').replace('// ','').replace('// ',''), ML + 4, y + 6);
   setFont('normal', 8, COL.text);
   problemLines.forEach((line, li) => {
     doc.text(line, ML + 4, y + 12 + li * 5);
@@ -1333,7 +1487,7 @@ function diagExportPDF() {
   // Keywords
   if (matchedKeywords && matchedKeywords.length) {
     setFont('normal', 6.5, COL.text2);
-    doc.text('Palavras-chave detectadas: ' + matchedKeywords.slice(0,6).join(', '), ML, y);
+    doc.text(T('diagKeywords') + ' ' + matchedKeywords.slice(0,6).join(', '), ML, y);
     y += 8;
   }
 
@@ -1343,7 +1497,7 @@ function diagExportPDF() {
   doc.setFillColor(...COL.accent);
   doc.rect(ML, y, 2, 5, 'F');
   setFont('bold', 9, COL.accent);
-  doc.text('CAUSAS PROVAVEIS', ML + 5, y + 4);
+  doc.text(T('diagCausesLabel').replace('// ','').toUpperCase(), ML + 5, y + 4);
   y += 10;
 
   const maxScore = causes[0] ? causes[0].score : 1;
@@ -1392,7 +1546,7 @@ function diagExportPDF() {
     doc.setFillColor(...COL.accent);
     doc.rect(ML, y, 2, 5, 'F');
     setFont('bold', 9, COL.accent);
-    doc.text('PASSO A PASSO DA SOLUCAO', ML + 5, y + 4);
+    doc.text(T('diagStepsLabel').replace('// ','').toUpperCase(), ML + 5, y + 4);
     y += 10;
 
     allSteps.forEach((step, i) => {
@@ -1440,13 +1594,13 @@ function diagExportPDF() {
       // Status label
       if (isSolved) {
         setFont('bold', 7, COL.green);
-        doc.text('✓ RESOLVIDO', ML + 17, y + 11.5);
+        doc.text(T('diagCbSolved').toUpperCase(), ML + 17, y + 11.5);
       } else if (isPending) {
         setFont('bold', 7, COL.yellow);
-        doc.text('⏳ PENDENTE', ML + 17, y + 11.5);
+        doc.text(T('diagCbPending').toUpperCase(), ML + 17, y + 11.5);
       } else {
         setFont('normal', 7, COL.text2);
-        doc.text('Nao verificado', ML + 17, y + 11.5);
+        doc.text('—', ML + 17, y + 11.5);
       }
 
       // Description
@@ -1469,7 +1623,7 @@ function diagExportPDF() {
     doc.setFillColor(...COL.red);
     doc.rect(ML, y, 2, 5, 'F');
     setFont('bold', 9, COL.red);
-    doc.text('AMEACA IDENTIFICADA: ' + vname.toUpperCase(), ML + 5, y + 4);
+    doc.text(T('diagVirusLabel').replace('// ','').toUpperCase() + ': ' + vname.toUpperCase(), ML + 5, y + 4);
     y += 10;
 
     defSteps.forEach((s, i) => {
@@ -1483,7 +1637,7 @@ function diagExportPDF() {
       checkPage(10);
       y += 2;
       setFont('bold', 7, COL.accent);
-      doc.text('Ferramentas: ' + v.protection.tools.join(' · '), ML, y);
+      doc.text(T('protectionTools') + ': ' + v.protection.tools.join(' · '), ML, y);
       y += 7;
     }
   }
@@ -1501,7 +1655,7 @@ function diagExportPDF() {
   doc.roundedRect(ML, y, W - ML - MR, 32, 2, 2, 'FD');
 
   setFont('bold', 9, COL.accent);
-  doc.text('RESUMO DO ATENDIMENTO', ML + 5, y + 7);
+  doc.text(T('diagPdfTitle').toUpperCase(), ML + 5, y + 7);
 
   const cols = [ML + 5, ML + 60, ML + 115];
   // Resolved
@@ -1510,33 +1664,36 @@ function diagExportPDF() {
   setFont('bold', 11, COL.green);
   doc.text(String(solvedSteps.length), cols[0] + 10, y + 17.5);
   setFont('normal', 7, COL.text2);
-  doc.text('Passos Resolvidos', cols[0] + 10, y + 22);
+  doc.text(T('diagCbSolved'), cols[0] + 10, y + 22);
   // Pending
   doc.setFillColor(...COL.yellow);
   doc.circle(cols[1] + 3, y + 16, 3, 'F');
   setFont('bold', 11, COL.yellow);
   doc.text(String(pendingSteps.length), cols[1] + 10, y + 17.5);
   setFont('normal', 7, COL.text2);
-  doc.text('Passos Pendentes', cols[1] + 10, y + 22);
+  doc.text(T('diagCbPending'), cols[1] + 10, y + 22);
   // Not checked
   doc.setFillColor(...COL.border);
   doc.circle(cols[2] + 3, y + 16, 3, 'F');
   setFont('bold', 11, COL.text2);
   doc.text(String(noneSteps.length), cols[2] + 10, y + 17.5);
   setFont('normal', 7, COL.text2);
-  doc.text('Nao verificados', cols[2] + 10, y + 22);
+  doc.text('—', cols[2] + 10, y + 22);
 
   y += 38;
 
   // ── FOOTER on every page ──────────────────────────────────
   const totalPages = doc.getNumberOfPages();
+  const pdfLang = currentLang || 'pt';
+  const pageWord = pdfLang === 'fr' ? 'Page' : pdfLang === 'en' ? 'Page' : 'Pagina';
+  const ofWord   = pdfLang === 'fr' ? 'sur' : pdfLang === 'en' ? 'of' : 'de';
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
     doc.setFillColor(...COL.accent);
     doc.rect(0, H - 2, W, 2, 'F');
     setFont('normal', 6, COL.text2);
-    doc.text('ARQ_COMP // Relatorio de Diagnostico Tecnico', ML, H - 6);
-    doc.text(`Pagina ${p} de ${totalPages}`, W - MR, H - 6, { align: 'right' });
+    doc.text('ARQ_COMP // ' + T('diagPdfTitle'), ML, H - 6);
+    doc.text(`${pageWord} ${p} ${ofWord} ${totalPages}`, W - MR, H - 6, { align: 'right' });
   }
 
   // Save
